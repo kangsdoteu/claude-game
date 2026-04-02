@@ -24,6 +24,7 @@ export function bindControls(loop, getState, dispatch) {
 
   function onKeyDown(e) {
     if (e.repeat) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('dialog[open]')) return;
     const action = keyMap[e.key];
     if (!action) return;
     e.preventDefault();

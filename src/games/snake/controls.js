@@ -11,6 +11,7 @@ const DIR_MAP = {
 
 export function bindControls(getState, setState) {
   function onKeyDown(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('dialog[open]')) return;
     const dir = DIR_MAP[e.key];
     if (!dir) return;
     e.preventDefault();

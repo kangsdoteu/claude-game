@@ -1,4 +1,4 @@
-import{r as a}from"./leaderboard-NlByvmLu.js";import"./index-Cuo8J4Js.js";function i(e){return e.innerHTML=`
+import{r as a}from"./leaderboard-DdV21sV4.js";import"./index-EJDDKxtb.js";function i(e){return e.innerHTML=`
     <div class="home-page">
       <header class="hero">
         <h1>GameHub</h1>

@@ -242,6 +242,34 @@ a:hover { text-decoration: underline; }
 .stat-value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .stat-box canvas { display: block; margin-top: 0.5rem; }
 
+/* ===== Controls Help ===== */
+.controls-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 0.75rem;
+  margin: 0;
+  font-size: 0.8rem;
+  list-style: none;
+}
+.controls-list dt {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+.controls-list dd {
+  color: var(--text-muted);
+  margin: 0;
+}
+.controls-list kbd {
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  line-height: 1;
+}
+
 /* ===== Leaderboard ===== */
 .leaderboard { background: var(--surface); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 1rem; }
 .leaderboard h3 { font-size: 1rem; margin-bottom: 0.75rem; }
@@ -492,6 +520,7 @@ dialog::backdrop {
   }
 
   .game-cards { grid-template-columns: 1fr; }
+  .controls-help { display: none; }
   #nav { padding: 0 1rem; }
 }
 

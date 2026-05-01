@@ -55,6 +55,14 @@ export function mount(container) {
               <div class="stat-label">Länge</div>
               <div class="stat-value" id="length-val">3</div>
             </div>
+            <div class="stat-box controls-help">
+              <div class="stat-label">Steuerung</div>
+              <dl class="controls-list">
+                <dt><kbd>←</kbd> <kbd>↑</kbd> <kbd>→</kbd> <kbd>↓</kbd></dt><dd>Richtung</dd>
+                <dt><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></dt><dd>Richtung</dd>
+                <dt><kbd>P</kbd> <kbd>Esc</kbd></dt><dd>Pause</dd>
+              </dl>
+            </div>
           </div>
           <div id="leaderboard-area"></div>
         </aside>

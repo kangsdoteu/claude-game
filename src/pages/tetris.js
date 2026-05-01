@@ -73,6 +73,17 @@ export function mount(container) {
               <div class="stat-label">Hold (C)</div>
               <canvas id="hold-canvas" width="96" height="96"></canvas>
             </div>
+            <div class="stat-box controls-help">
+              <div class="stat-label">Steuerung</div>
+              <dl class="controls-list">
+                <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>Bewegen</dd>
+                <dt><kbd>↓</kbd> <kbd>S</kbd></dt><dd>Soft-Drop</dd>
+                <dt><kbd>Leertaste</kbd></dt><dd>Hard-Drop</dd>
+                <dt><kbd>↑</kbd> <kbd>Z</kbd> <kbd>W</kbd></dt><dd>Drehen</dd>
+                <dt><kbd>C</kbd> <kbd>Shift</kbd></dt><dd>Hold</dd>
+                <dt><kbd>P</kbd> <kbd>Esc</kbd></dt><dd>Pause</dd>
+              </dl>
+            </div>
           </div>
           <div id="leaderboard-area"></div>
         </aside>

@@ -18,6 +18,17 @@ export function mount(container) {
 
   container.innerHTML = `
     <div class="game-page">
+      <!-- Mobile score strip (sticky, above canvas) -->
+      <div class="sidebar-stats--strip">
+        <div class="stat-box">
+          <div class="stat-label">Score</div>
+          <div class="stat-value" id="score-val-strip">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Länge</div>
+          <div class="stat-value" id="length-val-strip">3</div>
+        </div>
+      </div>
       <div class="game-layout">
         <div class="game-area">
           <canvas id="snake-canvas" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}"></canvas>
@@ -34,6 +45,7 @@ export function mount(container) {
           </div>
         </div>
         <aside class="game-sidebar">
+          <!-- Desktop sidebar stats (Score/Länge) -->
           <div class="sidebar-stats">
             <div class="stat-box">
               <div class="stat-label">Score</div>
@@ -67,7 +79,7 @@ export function mount(container) {
   }
 
   cleanupControls = bindControls({ pause: togglePause }, getState, setState);
-  cleanupTouch = bindTouchControls(container.querySelector('.game-area'), getState, setState);
+  cleanupTouch = bindTouchControls(container.querySelector('.game-page'), getState, setState);
 
   function loop(timestamp) {
     const delta = timestamp - lastTime;
@@ -83,8 +95,12 @@ export function mount(container) {
       if (tickAcc >= state.speed) {
         tickAcc -= state.speed;
         state = tick(state);
-        document.getElementById('score-val').textContent = state.score.toLocaleString('de-DE');
-        document.getElementById('length-val').textContent = state.snake.length;
+        const score = state.score.toLocaleString('de-DE');
+        const length = state.snake.length;
+        document.getElementById('score-val').textContent = score;
+        document.getElementById('length-val').textContent = length;
+        document.getElementById('score-val-strip').textContent = score;
+        document.getElementById('length-val-strip').textContent = length;
         if (!state.alive) { endGame(); return; }
       }
       render(canvas, state);

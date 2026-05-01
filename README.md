@@ -43,6 +43,7 @@ cd claude-game
 npm install
 cp .env.example .env
 # .env mit den eigenen Supabase-Credentials befüllen
+# Ohne befüllte .env startet die App im Konfigurations-Fehler-Modus und zeigt einen entsprechenden Banner.
 npm run dev
 ```
 
@@ -171,7 +172,7 @@ Bei Viewport-Breite ≤ 700 px wird ein Touch-D-Pad eingeblendet.
 2. `dist/` wird via `peaceiris/actions-gh-pages` nach `gh-pages` gepusht.
 3. GitHub Pages serviert von dort.
 
-In den Repo-Settings müssen unter **Settings → Secrets and variables → Actions → Variables** die beiden Variablen `SUPABASE_URL` und `SUPABASE_ANON_KEY` gesetzt sein.
+In den Repo-Settings müssen unter **Settings → Secrets and variables → Actions → Variables** die beiden Variablen `SUPABASE_URL` und `SUPABASE_ANON_KEY` gesetzt sein. Sind die Variablen nicht gesetzt, baut die App trotzdem fehlerfrei durch – sie startet dann im Konfigurations-Fehler-Modus und zeigt einen entsprechenden Banner.
 
 > **Hinweis:** `vite.config.js` setzt `base: '/claude-game/'`. Bei Fork mit anderem Repo-Namen muss dieser Wert angepasst werden, sonst brechen alle relativen Asset-Pfade auf Pages.
 

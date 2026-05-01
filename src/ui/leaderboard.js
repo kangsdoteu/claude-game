@@ -1,5 +1,12 @@
 import { getLeaderboard } from '../api/scores.js';
 
+const cache = new Map();
+const TTL_MS = 60_000;
+
+export function invalidate(game) {
+  cache.delete(game);
+}
+
 export async function renderLeaderboard(container, activeGame = 'tetris') {
   container.innerHTML = '';
 
@@ -16,6 +23,7 @@ export async function renderLeaderboard(container, activeGame = 'tetris') {
   ['tetris', 'snake'].forEach(game => {
     const btn = document.createElement('button');
     btn.setAttribute('role', 'tab');
+    btn.setAttribute('type', 'button');
     btn.textContent = game.charAt(0).toUpperCase() + game.slice(1);
     btn.dataset.game = game;
     if (game === activeGame) btn.classList.add('active');
@@ -28,36 +36,114 @@ export async function renderLeaderboard(container, activeGame = 'tetris') {
   section.appendChild(content);
   container.appendChild(section);
 
-  async function loadTable(game) {
-    content.textContent = 'Lade…';
+  function setState(view, payload) {
+    content.innerHTML = '';
+    if (view === 'loading') {
+      renderSkeleton(content);
+    } else if (view === 'error') {
+      renderError(content, payload);
+    } else if (view === 'empty') {
+      const p = document.createElement('p');
+      p.className = 'lb-empty';
+      p.textContent = 'Noch keine Einträge.';
+      content.appendChild(p);
+    } else if (view === 'data') {
+      renderTable(content, payload);
+    }
+  }
+
+  async function loadTable(game, { force = false } = {}) {
+    const entry = cache.get(game);
+    if (!force && entry && (Date.now() - entry.timestamp) < TTL_MS) {
+      setState('data', entry.data);
+      return;
+    }
+
+    setState('loading');
     try {
       const scores = await getLeaderboard(game, 10);
-      renderTable(content, scores);
+      cache.set(game, { data: scores, timestamp: Date.now() });
+      if (scores.length === 0) {
+        setState('empty');
+      } else {
+        setState('data', scores);
+      }
     } catch {
-      content.textContent = 'Fehler beim Laden.';
+      // Errors are not cached so retry always triggers a fresh fetch
+      setState('error', {
+        onRetry: () => loadTable(game, { force: true }),
+      });
     }
   }
 
   tabs.querySelectorAll('[role=tab]').forEach(tab => {
-    tab.addEventListener('click', async () => {
+    tab.addEventListener('click', () => {
       tabs.querySelectorAll('[role=tab]').forEach(t => t.classList.toggle('active', t === tab));
-      await loadTable(tab.dataset.game);
+      loadTable(tab.dataset.game);
     });
   });
 
   await loadTable(activeGame);
 }
 
-function renderTable(container, scores) {
-  container.innerHTML = '';
-  if (!scores.length) {
-    const p = document.createElement('p');
-    p.className = 'lb-empty';
-    p.textContent = 'Noch keine Einträge.';
-    container.appendChild(p);
-    return;
-  }
+function renderSkeleton(container) {
+  // aria-hidden keeps screen readers from reading placeholder content
+  const table = document.createElement('table');
+  table.className = 'lb-table lb-table--skeleton';
+  table.setAttribute('aria-hidden', 'true');
 
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['#', 'Spieler', 'Punkte', 'Datum'].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  const widths = ['--sk-narrow', '--sk-narrow', '--sk-wide', '--sk-medium'];
+  for (let i = 0; i < 6; i++) {
+    const tr = document.createElement('tr');
+    widths.forEach(w => {
+      const td = document.createElement('td');
+      const span = document.createElement('span');
+      span.className = `skeleton-bar ${w}`;
+      td.appendChild(span);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  container.appendChild(table);
+
+  const status = document.createElement('p');
+  status.className = 'lb-status';
+  status.setAttribute('role', 'status');
+  status.textContent = 'Lade…';
+  container.appendChild(status);
+}
+
+function renderError(container, { onRetry }) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'lb-error';
+
+  const msg = document.createElement('p');
+  msg.textContent = 'Fehler beim Laden.';
+  wrapper.appendChild(msg);
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'lb-retry';
+  btn.textContent = 'Erneut versuchen';
+  btn.addEventListener('click', onRetry);
+  wrapper.appendChild(btn);
+
+  container.appendChild(wrapper);
+}
+
+function renderTable(container, scores) {
   const medals = ['🥇', '🥈', '🥉'];
   const table = document.createElement('table');
   table.className = 'lb-table';

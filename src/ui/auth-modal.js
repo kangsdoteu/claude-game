@@ -1,6 +1,9 @@
-import { signIn, signUp, resetPassword } from '../api/auth.js';
+import { signIn, signUp, resetPassword, resendSignupConfirmation } from '../api/auth.js';
 
 let modal = null;
+
+// Module-local timer handle — cleared on modal close so no leak on reopen
+let resendCooldownTimer = null;
 
 export function initAuthModal() {
   if (modal) return { open: openModal };
@@ -30,6 +33,10 @@ export function initAuthModal() {
                  autocomplete="current-password" />
         </label>
         <div id="auth-msg" role="alert" class="auth-msg" hidden></div>
+        <div id="resend-hint" hidden>
+          <button type="button" id="resend-btn" class="link-btn">Bestätigungsmail erneut senden</button>
+          <span id="resend-status" class="auth-msg" hidden></span>
+        </div>
         <button type="submit" class="btn-primary">Anmelden</button>
         <button type="button" class="link-btn auth-forgot" data-tab="forgot">Passwort vergessen?</button>
         <button type="button" class="link-btn auth-back" hidden>Zurück zum Login</button>
@@ -37,6 +44,29 @@ export function initAuthModal() {
     </div>`;
 
   let mode = 'login';
+
+  const resendHint   = modal.querySelector('#resend-hint');
+  const resendBtn    = modal.querySelector('#resend-btn');
+  const resendStatus = modal.querySelector('#resend-status');
+
+  function showResend() {
+    resendHint.hidden = false;
+  }
+
+  function hideResend() {
+    resendHint.hidden = true;
+    resendStatus.hidden = true;
+    resendStatus.textContent = '';
+    clearResendCooldown();
+  }
+
+  function clearResendCooldown() {
+    if (resendCooldownTimer !== null) {
+      clearTimeout(resendCooldownTimer);
+      resendCooldownTimer = null;
+    }
+    resendBtn.disabled = false;
+  }
 
   function setMode(next) {
     mode = next;
@@ -57,6 +87,7 @@ export function initAuthModal() {
     if (next === 'login') {
       title.textContent = 'Anmelden';
       submitBtn.textContent = 'Anmelden';
+      submitBtn.disabled = false;
       nameLabel.classList.add('hidden');
       nameInput.removeAttribute('required');
       passwordLabel.classList.remove('hidden');
@@ -67,6 +98,7 @@ export function initAuthModal() {
     } else if (next === 'register') {
       title.textContent = 'Registrieren';
       submitBtn.textContent = 'Registrieren';
+      submitBtn.disabled = false;
       nameLabel.classList.remove('hidden');
       nameInput.required = true;
       passwordLabel.classList.remove('hidden');
@@ -77,6 +109,7 @@ export function initAuthModal() {
     } else if (next === 'forgot') {
       title.textContent = 'Passwort zurücksetzen';
       submitBtn.textContent = 'Reset-Link senden';
+      submitBtn.disabled = false;
       nameLabel.classList.add('hidden');
       nameInput.removeAttribute('required');
       passwordLabel.classList.add('hidden');
@@ -86,6 +119,7 @@ export function initAuthModal() {
       backLink.hidden = false;
     }
 
+    hideResend();
     clearMsg();
   }
 
@@ -106,6 +140,8 @@ export function initAuthModal() {
     setMode('login');
     modal.querySelector('input[name="password"]').value = '';
     modal.querySelector('input[name="displayName"]').value = '';
+    clearResendCooldown();
+    hideResend();
   });
 
   modal.querySelector('#auth-form').addEventListener('submit', async e => {
@@ -120,14 +156,53 @@ export function initAuthModal() {
     btn.textContent = 'Laden…';
     clearMsg();
 
+    // Controls whether the finally-block restores the submit button
+    let keepBtnDisabled = false;
+
     try {
       if (mode === 'login') {
         await signIn(email, password);
         modal.close();
       } else if (mode === 'register') {
-        await signUp(email, password, name || email.split('@')[0]);
-        showMsg('Erfolgreich registriert! Du bist jetzt eingeloggt.', 'success');
-        setTimeout(() => modal.close(), 1500);
+        const result = await signUp(email, password, name || email.split('@')[0]);
+
+        if (result.status === 'signed_in') {
+          showMsg('Erfolgreich registriert! Du bist jetzt eingeloggt.', 'success');
+          setTimeout(() => modal.close(), 1500);
+        } else if (result.status === 'verification_required') {
+          showMsg('Registrierung gestartet. Bitte bestätige den Link in der E-Mail.', 'success');
+          btn.textContent = 'Wartet auf Bestätigung';
+          // Store email in closure for resend handler, not read from live input
+          const confirmedEmail = email;
+          showResend();
+          modal.querySelector('input[name="password"]').value = '';
+          keepBtnDisabled = true;
+
+          resendBtn.onclick = async () => {
+            resendBtn.disabled = true;
+            resendStatus.hidden = false;
+            resendStatus.className = 'auth-msg';
+            resendStatus.textContent = 'Sende…';
+            try {
+              await resendSignupConfirmation(confirmedEmail);
+              resendStatus.textContent = 'E-Mail wurde erneut gesendet.';
+              resendStatus.className = 'auth-msg success';
+            } catch (resendErr) {
+              resendStatus.textContent = resendErr.message;
+              resendStatus.className = 'auth-msg error';
+              resendBtn.disabled = false;
+              return;
+            }
+            // 30-second cooldown after a successful resend
+            resendCooldownTimer = setTimeout(() => {
+              resendCooldownTimer = null;
+              resendBtn.disabled = false;
+            }, 30_000);
+          };
+        } else {
+          // maybe_existing: neutral message, no resend (anti-enumeration)
+          showMsg('Falls diese E-Mail noch nicht registriert ist, haben wir einen Bestätigungslink geschickt.', 'success');
+        }
       } else if (mode === 'forgot') {
         await resetPassword(email);
         showMsg('Falls die Adresse existiert, wurde ein Reset-Link gesendet.', 'success');
@@ -139,10 +214,36 @@ export function initAuthModal() {
       }
     } catch (err) {
       showMsg(err.message, 'error');
+      if (err.code === 'email_not_confirmed') {
+        const confirmedEmail = email;
+        showResend();
+        resendBtn.onclick = async () => {
+          resendBtn.disabled = true;
+          resendStatus.hidden = false;
+          resendStatus.className = 'auth-msg';
+          resendStatus.textContent = 'Sende…';
+          try {
+            await resendSignupConfirmation(confirmedEmail);
+            resendStatus.textContent = 'E-Mail wurde erneut gesendet.';
+            resendStatus.className = 'auth-msg success';
+          } catch (resendErr) {
+            resendStatus.textContent = resendErr.message;
+            resendStatus.className = 'auth-msg error';
+            resendBtn.disabled = false;
+            return;
+          }
+          resendCooldownTimer = setTimeout(() => {
+            resendCooldownTimer = null;
+            resendBtn.disabled = false;
+          }, 30_000);
+        };
+      }
     } finally {
-      btn.disabled = false;
-      const labels = { login: 'Anmelden', register: 'Registrieren', forgot: 'Reset-Link senden' };
-      btn.textContent = labels[mode];
+      if (!keepBtnDisabled) {
+        btn.disabled = false;
+        const labels = { login: 'Anmelden', register: 'Registrieren', forgot: 'Reset-Link senden' };
+        btn.textContent = labels[mode];
+      }
     }
   });
 

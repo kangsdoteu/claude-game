@@ -3,7 +3,7 @@ import { render, renderMini, CANVAS_W, CANVAS_H } from '../games/tetris/renderer
 import { bindControls, bindTouchControls } from '../games/tetris/controls.js';
 import { saveScore, getLeaderboard } from '../api/scores.js';
 import { getUser } from '../api/auth.js';
-import { renderLeaderboard } from '../ui/leaderboard.js';
+import { renderLeaderboard, invalidate } from '../ui/leaderboard.js';
 
 export function mount(container) {
   let state = createState();
@@ -124,6 +124,7 @@ export function mount(container) {
       try {
         await saveScore('tetris', state.score, duration);
         statusEl.textContent = '✓ Score gespeichert!';
+        invalidate('tetris');
         await renderLeaderboard(document.getElementById('leaderboard-area'), 'tetris');
       } catch (e) {
         statusEl.textContent = '⚠ ' + e.message;

@@ -3,7 +3,7 @@ import { render, CANVAS_SIZE } from '../games/snake/renderer.js';
 import { bindControls, bindTouchControls } from '../games/snake/controls.js';
 import { saveScore } from '../api/scores.js';
 import { getUser } from '../api/auth.js';
-import { renderLeaderboard } from '../ui/leaderboard.js';
+import { renderLeaderboard, invalidate } from '../ui/leaderboard.js';
 
 export function mount(container) {
   let state = createState();
@@ -98,6 +98,7 @@ export function mount(container) {
       try {
         await saveScore('snake', state.score, duration);
         statusEl.textContent = '✓ Score gespeichert!';
+        invalidate('snake');
         await renderLeaderboard(document.getElementById('leaderboard-area'), 'snake');
       } catch (e) {
         statusEl.textContent = '⚠ ' + e.message;

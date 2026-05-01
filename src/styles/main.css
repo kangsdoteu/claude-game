@@ -248,7 +248,55 @@ a:hover { text-decoration: underline; }
 .lb-table .top-1 td { color: #ffd700; }
 .lb-table .top-2 td { color: #c0c0c0; }
 .lb-table .top-3 td { color: #cd7f32; }
-.lb-empty, .lb-error { color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0; }
+.lb-empty { color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0; }
+
+/* Skeleton */
+.lb-table--skeleton td { padding: 0.5rem; }
+.skeleton-bar {
+  display: block;
+  height: 0.7rem;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  animation: lb-pulse 1.2s ease-in-out infinite;
+}
+.skeleton-bar.--sk-narrow { width: 1.5rem; }
+.skeleton-bar.--sk-medium { width: 3.5rem; }
+.skeleton-bar.--sk-wide   { width: 5rem; }
+
+@keyframes lb-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+.lb-status {
+  /* visually hidden but available to screen readers */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Error / Retry */
+.lb-error { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0; }
+.lb-retry {
+  padding: 0.25rem 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.lb-retry:hover { color: var(--accent); border-color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bar { animation: none; opacity: 0.6; }
+}
 
 /* ===== Auth Modal ===== */
 dialog {

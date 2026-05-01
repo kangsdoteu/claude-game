@@ -1,7 +1,7 @@
 const DAS_DELAY  = 170;
 const DAS_REPEAT = 50;
 
-export function bindControls(loop, getState, dispatch) {
+export function bindControls(callbacks, getState, dispatch) {
   let dasKey = null;
   let dasTimer = null;
 
@@ -21,10 +21,16 @@ export function bindControls(loop, getState, dispatch) {
   };
 
   const dasKeys = new Set(['ArrowLeft','ArrowRight','a','d']);
+  const pauseKeys = new Set(['p','P','Escape']);
 
   function onKeyDown(e) {
-    if (e.repeat) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('dialog[open]')) return;
+    if (e.repeat) return;
+    if (pauseKeys.has(e.key)) {
+      e.preventDefault();
+      callbacks.pause?.();
+      return;
+    }
     const action = keyMap[e.key];
     if (!action) return;
     e.preventDefault();

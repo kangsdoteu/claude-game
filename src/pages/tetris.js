@@ -20,6 +20,7 @@ export function mount(container) {
       <div class="game-layout">
         <div class="game-area">
           <canvas id="tetris-canvas" width="${CANVAS_W}" height="${CANVAS_H}"></canvas>
+          <div class="pause-overlay hidden" id="tetris-pause">⏸ Pause</div>
           <div class="game-over-overlay hidden" id="tetris-over">
             <h2>Game Over</h2>
             <p>Score: <strong id="final-score"></strong></p>
@@ -59,6 +60,13 @@ export function mount(container) {
   const nextCanvas = document.getElementById('next-canvas');
   const holdCanvas = document.getElementById('hold-canvas');
   const overlay   = document.getElementById('tetris-over');
+  const pauseOverlay = document.getElementById('tetris-pause');
+
+  function togglePause() {
+    if (gameOver) return;
+    paused = !paused;
+    pauseOverlay.classList.toggle('hidden', !paused);
+  }
 
   function updateStats() {
     document.getElementById('score-val').textContent = state.score.toLocaleString('de-DE');
@@ -77,7 +85,7 @@ export function mount(container) {
   }
 
   cleanupControls = bindControls(
-    { pause: () => { paused = !paused; } },
+    { pause: togglePause },
     () => state,
     dispatchAction
   );

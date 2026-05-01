@@ -11,9 +11,17 @@ const DIR_MAP = {
   d: { x:  1, y:  0 },
 };
 
-export function bindControls(getState, setState) {
+const PAUSE_KEYS = new Set(['p','P','Escape']);
+
+export function bindControls(callbacks, getState, setState) {
   function onKeyDown(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('dialog[open]')) return;
+    if (e.repeat) return;
+    if (PAUSE_KEYS.has(e.key)) {
+      e.preventDefault();
+      callbacks.pause?.();
+      return;
+    }
     const dir = DIR_MAP[e.key];
     if (!dir) return;
     e.preventDefault();

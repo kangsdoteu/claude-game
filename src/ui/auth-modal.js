@@ -99,8 +99,14 @@ export function initAuthModal() {
   modal.querySelector('.modal-close').addEventListener('click', () => modal.close());
   modal.addEventListener('click', e => { if (e.target === modal) modal.close(); });
 
-  // Reset to login mode whenever the dialog is closed
-  modal.addEventListener('close', () => setMode('login'));
+  // Reset to login mode and clear sensitive fields whenever the dialog is closed.
+  // Prevents a previous user's password from being visible when the modal is reopened
+  // on a shared device. Email is intentionally kept for UX (accidental close recovery).
+  modal.addEventListener('close', () => {
+    setMode('login');
+    modal.querySelector('input[name="password"]').value = '';
+    modal.querySelector('input[name="displayName"]').value = '';
+  });
 
   modal.querySelector('#auth-form').addEventListener('submit', async e => {
     e.preventDefault();

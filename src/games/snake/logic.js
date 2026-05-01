@@ -4,17 +4,25 @@ export function createState() {
   const snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
   return {
     snake,
-    dir:     { x: 1, y: 0 },
-    nextDir: { x: 1, y: 0 },
-    food:    spawnFood(snake),
-    score:   0,
-    speed:   150,
-    alive:   true,
-    startTime: Date.now(),
+    dir:       { x: 1, y: 0 },
+    nextDir:   { x: 1, y: 0 },
+    food:      spawnFood(snake),
+    score:     0,
+    speed:     150,
+    alive:     true,
+    started:   false,
+    startTime: null,
   };
 }
 
+// Idempotent: first direction input starts the clock
+export function start(state) {
+  if (state.started) return state;
+  return { ...state, started: true, startTime: Date.now() };
+}
+
 export function tick(state) {
+  if (!state.started) return state;
   if (!state.alive) return state;
 
   const dir = state.nextDir;

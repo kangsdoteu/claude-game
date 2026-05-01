@@ -56,11 +56,12 @@ export function createState() {
     holdUsed: false,
     bag,
     nextBag,
-    score: 0,
-    level: 0,
-    lines: 0,
-    alive: true,
-    startTime: Date.now(),
+    score:     0,
+    level:     0,
+    lines:     0,
+    alive:     true,
+    started:   false,
+    startTime: null,
   };
 }
 
@@ -188,6 +189,12 @@ function lockPiece(state) {
     lines: newLines,
     level: newLevel,
   };
+}
+
+// Idempotent: first player action starts the clock
+export function start(state) {
+  if (state.started) return state;
+  return { ...state, started: true, startTime: Date.now() };
 }
 
 export function getGhostY(state) {

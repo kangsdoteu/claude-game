@@ -10,6 +10,7 @@ export function mount(container) {
   let rafId = null;
   let lastTime = 0;
   let tickAcc = 0;
+  let prevStarted = false;
   let paused = false;
   let gameOver = false;
   let cleanupControls = null;
@@ -20,6 +21,10 @@ export function mount(container) {
       <div class="game-layout">
         <div class="game-area">
           <canvas id="snake-canvas" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}"></canvas>
+          <div class="start-overlay" id="snake-start">
+            <h2>Snake</h2>
+            <p>Drücke eine Pfeiltaste oder W/A/S/D zum Starten</p>
+          </div>
           <div class="pause-overlay hidden" id="snake-pause">⏸ Pause</div>
           <div class="game-over-overlay hidden" id="snake-over">
             <h2>Game Over</h2>
@@ -44,8 +49,9 @@ export function mount(container) {
       </div>
     </div>`;
 
-  const canvas  = document.getElementById('snake-canvas');
-  const overlay = document.getElementById('snake-over');
+  const canvas       = document.getElementById('snake-canvas');
+  const overlay      = document.getElementById('snake-over');
+  const startOverlay = document.getElementById('snake-start');
   const pauseOverlay = document.getElementById('snake-pause');
 
   function togglePause() {
@@ -68,6 +74,11 @@ export function mount(container) {
     lastTime = timestamp;
 
     if (!paused && !gameOver) {
+      if (state.started) startOverlay.classList.add('hidden');
+      if (state.started && !prevStarted) {
+        prevStarted = true;
+        tickAcc = 0;
+      }
       tickAcc += delta;
       if (tickAcc >= state.speed) {
         tickAcc -= state.speed;
@@ -87,7 +98,7 @@ export function mount(container) {
     cancelAnimationFrame(rafId);
     rafId = null;
 
-    const duration = Math.max(5, Math.floor((Date.now() - state.startTime) / 1000));
+    const duration = Math.max(5, Math.floor((Date.now() - (state.startTime ?? Date.now())) / 1000));
     overlay.classList.remove('hidden');
     document.getElementById('final-score').textContent = state.score.toLocaleString('de-DE');
 

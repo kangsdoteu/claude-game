@@ -1,4 +1,4 @@
-import{a as u,b as g}from"./index-C2hTjdh4.js";let e=null;function h(){if(e)return{open:()=>e.showModal()};e=document.getElementById("auth-modal"),e.innerHTML=`
+import{a as u,b as g}from"./index-C6Yrokzr.js";let e=null;function h(){if(e)return{open:()=>e.showModal()};e=document.getElementById("auth-modal"),e.innerHTML=`
     <div class="modal-box">
       <button class="modal-close" aria-label="Schließen">✕</button>
       <div class="modal-tabs" role="tablist">

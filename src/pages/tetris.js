@@ -20,6 +20,10 @@ export function mount(container) {
       <div class="game-layout">
         <div class="game-area">
           <canvas id="tetris-canvas" width="${CANVAS_W}" height="${CANVAS_H}"></canvas>
+          <div class="start-overlay" id="tetris-start">
+            <h2>Tetris</h2>
+            <p>Drücke eine Taste zum Starten</p>
+          </div>
           <div class="pause-overlay hidden" id="tetris-pause">⏸ Pause</div>
           <div class="game-over-overlay hidden" id="tetris-over">
             <h2>Game Over</h2>
@@ -56,10 +60,11 @@ export function mount(container) {
       </div>
     </div>`;
 
-  const canvas    = document.getElementById('tetris-canvas');
-  const nextCanvas = document.getElementById('next-canvas');
-  const holdCanvas = document.getElementById('hold-canvas');
-  const overlay   = document.getElementById('tetris-over');
+  const canvas       = document.getElementById('tetris-canvas');
+  const nextCanvas   = document.getElementById('next-canvas');
+  const holdCanvas   = document.getElementById('hold-canvas');
+  const overlay      = document.getElementById('tetris-over');
+  const startOverlay = document.getElementById('tetris-start');
   const pauseOverlay = document.getElementById('tetris-pause');
 
   function togglePause() {
@@ -78,6 +83,10 @@ export function mount(container) {
 
   function dispatchAction(action) {
     if (paused || gameOver) return;
+    if (!state.started) {
+      state = { ...state, started: true, startTime: Date.now() };
+      startOverlay.classList.add('hidden');
+    }
     state = gameDispatch(state, action);
     render(canvas, state);
     updateStats();
@@ -94,12 +103,14 @@ export function mount(container) {
   function loop(timestamp) {
     if (!paused && !gameOver) {
       const delta = timestamp - lastTime;
-      dropAcc += delta;
-      const speed = getLevelSpeed(state.level);
-      if (dropAcc >= speed) {
-        dropAcc -= speed;
-        state = gameDispatch(state, 'softDrop');
-        if (!state.alive) { endGame(); return; }
+      if (state.started) {
+        dropAcc += delta;
+        const speed = getLevelSpeed(state.level);
+        if (dropAcc >= speed) {
+          dropAcc -= speed;
+          state = gameDispatch(state, 'softDrop');
+          if (!state.alive) { endGame(); return; }
+        }
       }
       render(canvas, state);
       updateStats();
@@ -113,7 +124,7 @@ export function mount(container) {
     cancelAnimationFrame(rafId);
     rafId = null;
 
-    const duration = Math.max(5, Math.floor((Date.now() - state.startTime) / 1000));
+    const duration = Math.max(5, Math.floor((Date.now() - (state.startTime ?? Date.now())) / 1000));
     overlay.classList.remove('hidden');
     document.getElementById('final-score').textContent = state.score.toLocaleString('de-DE');
 

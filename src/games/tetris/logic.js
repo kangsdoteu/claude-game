@@ -56,11 +56,12 @@ export function createState() {
     holdUsed: false,
     bag,
     nextBag,
-    score: 0,
-    level: 0,
-    lines: 0,
-    alive: true,
-    startTime: Date.now(),
+    score:     0,
+    level:     0,
+    lines:     0,
+    alive:     true,
+    started:   false,
+    startTime: null,
   };
 }
 

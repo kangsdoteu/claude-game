@@ -59,7 +59,7 @@ export function initAuthModal() {
       submitBtn.textContent = 'Anmelden';
       nameLabel.classList.add('hidden');
       nameInput.removeAttribute('required');
-      passwordLabel.hidden = false;
+      passwordLabel.classList.remove('hidden');
       passwordInput.required = true;
       passwordInput.setAttribute('autocomplete', 'current-password');
       forgotLink.hidden = false;
@@ -69,7 +69,7 @@ export function initAuthModal() {
       submitBtn.textContent = 'Registrieren';
       nameLabel.classList.remove('hidden');
       nameInput.required = true;
-      passwordLabel.hidden = false;
+      passwordLabel.classList.remove('hidden');
       passwordInput.required = true;
       passwordInput.setAttribute('autocomplete', 'new-password');
       forgotLink.hidden = true;
@@ -79,7 +79,7 @@ export function initAuthModal() {
       submitBtn.textContent = 'Reset-Link senden';
       nameLabel.classList.add('hidden');
       nameInput.removeAttribute('required');
-      passwordLabel.hidden = true;
+      passwordLabel.classList.add('hidden');
       passwordInput.required = false;
       passwordInput.setAttribute('autocomplete', 'new-password');
       forgotLink.hidden = true;

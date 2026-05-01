@@ -184,6 +184,22 @@ a:hover { text-decoration: underline; }
 .start-overlay p { color: var(--text-muted); }
 .start-overlay.hidden { display: none; }
 
+.pause-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(10,10,15,0.7);
+  border-radius: 4px;
+  color: var(--text);
+  user-select: none;
+}
+.pause-overlay.hidden { display: none; }
+
 /* ===== Sidebar ===== */
 .game-sidebar {
   flex: 1;

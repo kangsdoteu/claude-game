@@ -20,6 +20,7 @@ export function mount(container) {
       <div class="game-layout">
         <div class="game-area">
           <canvas id="snake-canvas" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}"></canvas>
+          <div class="pause-overlay hidden" id="snake-pause">⏸ Pause</div>
           <div class="game-over-overlay hidden" id="snake-over">
             <h2>Game Over</h2>
             <p>Score: <strong id="final-score"></strong></p>
@@ -45,11 +46,21 @@ export function mount(container) {
 
   const canvas  = document.getElementById('snake-canvas');
   const overlay = document.getElementById('snake-over');
+  const pauseOverlay = document.getElementById('snake-pause');
+
+  function togglePause() {
+    if (gameOver) return;
+    paused = !paused;
+    pauseOverlay.classList.toggle('hidden', !paused);
+  }
 
   function getState() { return state; }
-  function setState(updater) { state = updater(state); }
+  function setState(updater) {
+    if (paused || gameOver) return;
+    state = updater(state);
+  }
 
-  cleanupControls = bindControls(getState, setState);
+  cleanupControls = bindControls({ pause: togglePause }, getState, setState);
   cleanupTouch = bindTouchControls(container.querySelector('.game-area'), getState, setState);
 
   function loop(timestamp) {

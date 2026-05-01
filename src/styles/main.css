@@ -347,6 +347,12 @@ dialog {
   background: transparent;
   border: none;
   padding: 0;
+  /* Canonical centering for <dialog> — replaces browser default top-left placement */
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
   max-width: 100vw;
   max-height: 100vh;
 }
@@ -363,6 +369,19 @@ dialog::backdrop {
   padding: 2rem;
   width: min(400px, 90vw);
 }
+
+.modal-box h2 {
+  margin-top: 0;
+  font-size: 1.3rem;
+  color: var(--text);
+}
+
+.auth-forgot {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+}
+.auth-forgot:hover { color: var(--accent); }
 
 .modal-close {
   position: absolute;

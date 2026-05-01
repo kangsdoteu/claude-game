@@ -1,4 +1,4 @@
-import { createState, dispatch as gameDispatch, getLevelSpeed } from '../games/tetris/logic.js';
+import { createState, start, dispatch as gameDispatch, getLevelSpeed } from '../games/tetris/logic.js';
 import { render, renderMini, CANVAS_W, CANVAS_H } from '../games/tetris/renderer.js';
 import { bindControls, bindTouchControls } from '../games/tetris/controls.js';
 import { saveScore, getLeaderboard } from '../api/scores.js';
@@ -83,8 +83,9 @@ export function mount(container) {
 
   function dispatchAction(action) {
     if (paused || gameOver) return;
+    if (action === 'hold' && !state.started) return;
     if (!state.started) {
-      state = { ...state, started: true, startTime: Date.now() };
+      state = start(state);
       startOverlay.classList.add('hidden');
     }
     state = gameDispatch(state, action);

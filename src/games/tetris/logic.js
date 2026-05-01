@@ -191,6 +191,12 @@ function lockPiece(state) {
   };
 }
 
+// Idempotent: first player action starts the clock
+export function start(state) {
+  if (state.started) return state;
+  return { ...state, started: true, startTime: Date.now() };
+}
+
 export function getGhostY(state) {
   let dy = 0;
   while (!collides(state.board, state.current.shape, state.current.x, state.current.y + dy + 1)) dy++;

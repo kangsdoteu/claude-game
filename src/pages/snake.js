@@ -10,6 +10,7 @@ export function mount(container) {
   let rafId = null;
   let lastTime = 0;
   let tickAcc = 0;
+  let prevStarted = false;
   let paused = false;
   let gameOver = false;
   let cleanupControls = null;
@@ -74,6 +75,10 @@ export function mount(container) {
 
     if (!paused && !gameOver) {
       if (state.started) startOverlay.classList.add('hidden');
+      if (state.started && !prevStarted) {
+        prevStarted = true;
+        tickAcc = 0;
+      }
       tickAcc += delta;
       if (tickAcc >= state.speed) {
         tickAcc -= state.speed;

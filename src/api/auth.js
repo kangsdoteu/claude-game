@@ -5,6 +5,9 @@ const ERROR_MAP = {
   'User already registered': 'Diese E-Mail ist bereits registriert.',
   'Email not confirmed': 'Bitte bestätige zuerst deine E-Mail.',
   'Password should be at least 6 characters': 'Passwort muss mindestens 6 Zeichen haben.',
+  'Email rate limit exceeded': 'Zu viele Versuche. Bitte später erneut probieren.',
+  'Unable to validate email address: invalid format': 'Ungültige E-Mail-Adresse.',
+  'For security purposes, you can only request this once every 60 seconds': 'Aus Sicherheitsgründen nur einmal pro Minute möglich. Bitte warten.',
 };
 
 function mapError(msg) {
@@ -44,4 +47,11 @@ export async function getUser() {
 export function onAuthChange(cb) {
   const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => cb(session));
   return () => subscription.unsubscribe();
+}
+
+export async function resetPassword(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + import.meta.env.BASE_URL,
+  });
+  if (error) throw new Error(mapError(error.message));
 }

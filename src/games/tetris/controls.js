@@ -1,5 +1,7 @@
-const DAS_DELAY  = 170;
-const DAS_REPEAT = 50;
+const DAS_DELAY        = 170;
+const DAS_REPEAT       = 50;
+const SOFT_DROP_DELAY  = 80;
+const SOFT_DROP_REPEAT = 50;
 
 export function bindControls(callbacks, getState, dispatch) {
   let dasKey = null;
@@ -20,8 +22,17 @@ export function bindControls(callbacks, getState, dispatch) {
     w:          'rotate',
   };
 
-  const dasKeys = new Set(['ArrowLeft','ArrowRight','a','d']);
-  const pauseKeys = new Set(['p','P','Escape']);
+  const dasKeys      = new Set(['ArrowLeft','ArrowRight','a','d']);
+  const softDropKeys = new Set(['ArrowDown','s']);
+  const pauseKeys    = new Set(['p','P','Escape']);
+
+  function startRepeat(key, delay, repeat) {
+    clearTimeout(dasTimer); clearInterval(dasTimer);
+    dasKey = key;
+    dasTimer = setTimeout(() => {
+      dasTimer = setInterval(() => dispatch(keyMap[dasKey]), repeat);
+    }, delay);
+  }
 
   function onKeyDown(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('dialog[open]')) return;
@@ -36,13 +47,8 @@ export function bindControls(callbacks, getState, dispatch) {
     e.preventDefault();
     dispatch(action);
 
-    if (dasKeys.has(e.key)) {
-      clearTimeout(dasTimer); clearInterval(dasTimer);
-      dasKey = e.key;
-      dasTimer = setTimeout(() => {
-        dasTimer = setInterval(() => dispatch(keyMap[dasKey]), DAS_REPEAT);
-      }, DAS_DELAY);
-    }
+    if (dasKeys.has(e.key))           startRepeat(e.key, DAS_DELAY, DAS_REPEAT);
+    else if (softDropKeys.has(e.key)) startRepeat(e.key, SOFT_DROP_DELAY, SOFT_DROP_REPEAT);
   }
 
   function onKeyUp(e) {

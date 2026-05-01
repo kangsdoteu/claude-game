@@ -51,8 +51,8 @@ export function tick(state) {
 }
 
 export function setDirection(state, newDir) {
-  // Prevent 180° turn
-  if (newDir.x === -state.dir.x && newDir.y === -state.dir.y) return state;
+  // Check against nextDir, not dir: a perpendicular-then-reverse input within one tick would otherwise overwrite the buffered turn and self-kill.
+  if (newDir.x === -state.nextDir.x && newDir.y === -state.nextDir.y) return state;
   return { ...state, nextDir: newDir };
 }
 

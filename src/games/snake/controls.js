@@ -1,3 +1,5 @@
+import { setDirection } from './logic.js';
+
 const DIR_MAP = {
   ArrowUp:    { x:  0, y: -1 },
   ArrowDown:  { x:  0, y:  1 },
@@ -17,11 +19,7 @@ export function bindControls(getState, setState) {
     e.preventDefault();
     const state = getState();
     if (!state.alive) return;
-    setState(s => {
-      // Prevent 180° turn
-      if (dir.x === -s.dir.x && dir.y === -s.dir.y) return s;
-      return { ...s, nextDir: dir };
-    });
+    setState(s => setDirection(s, dir));
   }
 
   document.addEventListener('keydown', onKeyDown);
@@ -45,10 +43,7 @@ export function bindTouchControls(container, getState, setState) {
     btn.addEventListener('touchstart', e => {
       e.preventDefault();
       const dir = { x: +btn.dataset.x, y: +btn.dataset.y };
-      setState(s => {
-        if (dir.x === -s.dir.x && dir.y === -s.dir.y) return s;
-        return { ...s, nextDir: dir };
-      });
+      setState(s => setDirection(s, dir));
     }, { passive: false });
   });
 

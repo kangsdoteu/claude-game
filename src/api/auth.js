@@ -16,15 +16,35 @@ function mapError(msg) {
 
 export async function signIn(email, password) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw new Error(mapError(error.message));
+  if (error) {
+    const err = new Error(mapError(error.message));
+    if (error.message === 'Email not confirmed') {
+      err.code = 'email_not_confirmed';
+    }
+    throw err;
+  }
 }
 
 export async function signUp(email, password, displayName) {
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: { data: { display_name: displayName } },
   });
+  if (error) throw new Error(mapError(error.message));
+
+  if (data.session) {
+    return { status: 'signed_in' };
+  }
+  // Anti-Enumeration: identities is empty when the address is already registered
+  if (data.user?.identities?.length === 0) {
+    return { status: 'maybe_existing', email };
+  }
+  return { status: 'verification_required', email };
+}
+
+export async function resendSignupConfirmation(email) {
+  const { error } = await supabase.auth.resend({ type: 'signup', email });
   if (error) throw new Error(mapError(error.message));
 }
 

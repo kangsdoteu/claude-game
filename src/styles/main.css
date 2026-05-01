@@ -1,16 +1,20 @@
 /* ===== CSS Custom Properties ===== */
 :root {
-  --bg:          #0a0a0f;
-  --surface:     #1a1a2e;
-  --surface2:    #22223b;
-  --accent:      #7f5af0;
-  --accent2:     #2cb67d;
-  --text:        #fffffe;
-  --text-muted:  #94a1b2;
-  --danger:      #e53170;
-  --success:     #2cb67d;
-  --radius:      8px;
-  --nav-h:       56px;
+  --bg:            #0a0a0f;
+  --surface:       #1a1a2e;
+  --surface2:      #22223b;
+  --accent:        #7f5af0;
+  --accent2:       #2cb67d;
+  --text:          #fffffe;
+  --text-muted:    #94a1b2;
+  --danger:        #e53170;
+  --success:       #2cb67d;
+  --radius:        8px;
+  --nav-h:         56px;
+  --score-strip-h: 48px;
+  --dpad-h:        208px;
+  --safe-bottom:   env(safe-area-inset-bottom, 0px);
+  --dpad-btn-size: 56px;
 }
 
 /* ===== Reset & Base ===== */
@@ -150,6 +154,11 @@ a:hover { text-decoration: underline; }
   border-radius: 4px;
 }
 
+/* Score strip — visible only on mobile (hidden on desktop via media query) */
+.sidebar-stats--strip {
+  display: none;
+}
+
 /* ===== Game Over Overlay ===== */
 .game-over-overlay {
   position: absolute;
@@ -213,6 +222,13 @@ a:hover { text-decoration: underline; }
 .sidebar-stats {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Next + Hold in a two-column grid inside the sidebar */
+.sidebar-extras {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
 }
 
@@ -370,12 +386,11 @@ dialog::backdrop {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 1rem;
 }
 .dpad-row { display: flex; gap: 0.5rem; }
 .dpad-btn {
-  width: 56px;
-  height: 56px;
+  width: var(--dpad-btn-size);
+  height: var(--dpad-btn-size);
   background: var(--surface2);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: var(--radius);
@@ -413,11 +428,118 @@ dialog::backdrop {
 
 /* ===== Responsive ===== */
 @media (max-width: 700px) {
+  /* Score strip replaces sidebar stats on mobile */
+  .sidebar-stats--strip {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    height: var(--score-strip-h);
+    padding: 0 0.75rem;
+    background: var(--surface);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: sticky;
+    top: var(--nav-h);
+    z-index: 80;
+  }
+  .sidebar-stats--strip .stat-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.6rem;
+    border: none;
+    background: transparent;
+  }
+  .sidebar-stats--strip .stat-label {
+    font-size: 0.65rem;
+  }
+  .sidebar-stats--strip .stat-value {
+    font-size: 1.1rem;
+  }
+
+  /* Canvas sizing: fill available space between strip and fixed D-pad */
+  .game-area canvas {
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    max-height: calc(100dvh - var(--nav-h) - var(--score-strip-h) - var(--dpad-h) - var(--safe-bottom) - 16px);
+  }
+
+  /* Game layout stacks vertically on mobile */
   .game-layout { flex-direction: column; align-items: center; }
   .game-sidebar { max-width: 100%; width: 100%; }
+
+  /* Hide desktop sidebar stats; sidebar-extras (Next/Hold) scroll below fold */
+  .game-sidebar .sidebar-stats { display: none; }
+
+  /* Enough bottom padding so content doesn't hide under fixed D-pad */
+  .game-page {
+    padding-bottom: calc(var(--dpad-h) + var(--safe-bottom));
+  }
+
+  /* Fixed D-pad at bottom */
+  .touch-controls {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0.5rem 0.5rem calc(0.5rem + var(--safe-bottom));
+    background: var(--bg);
+    z-index: 90;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
   .game-cards { grid-template-columns: 1fr; }
-  .touch-controls { display: flex; }
   #nav { padding: 0 1rem; }
+}
+
+/* Landscape: canvas left, D-pad right; leaderboard hidden during play */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+  .game-page {
+    padding-bottom: 0;
+  }
+  .game-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .game-area {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .game-area canvas {
+    max-height: calc(100dvh - var(--nav-h) - 16px);
+    max-width: 100%;
+    width: auto;
+    height: auto;
+  }
+  /* D-pad fixed to the right side in landscape */
+  .touch-controls {
+    display: flex;
+    position: fixed;
+    right: 0;
+    top: var(--nav-h);
+    left: auto;
+    bottom: 0;
+    width: calc(var(--dpad-h) + 1rem);
+    padding: 0.5rem;
+    flex-direction: column;
+    justify-content: center;
+    background: var(--bg);
+    border-left: 1px solid rgba(255,255,255,0.08);
+    border-top: none;
+    z-index: 90;
+  }
+  /* Hide leaderboard + extras during play in landscape */
+  .game-sidebar {
+    display: none;
+  }
+  /* Hide strip header in landscape too — no space */
+  .sidebar-stats--strip {
+    display: none;
+  }
 }
 
 @media (max-width: 420px) {

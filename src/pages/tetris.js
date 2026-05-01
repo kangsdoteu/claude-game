@@ -17,6 +17,21 @@ export function mount(container) {
 
   container.innerHTML = `
     <div class="game-page">
+      <!-- Mobile score strip (sticky, above canvas) -->
+      <div class="sidebar-stats--strip">
+        <div class="stat-box">
+          <div class="stat-label">Score</div>
+          <div class="stat-value" id="score-val-strip">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Level</div>
+          <div class="stat-value" id="level-val-strip">1</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Lines</div>
+          <div class="stat-value" id="lines-val-strip">0</div>
+        </div>
+      </div>
       <div class="game-layout">
         <div class="game-area">
           <canvas id="tetris-canvas" width="${CANVAS_W}" height="${CANVAS_H}"></canvas>
@@ -33,6 +48,7 @@ export function mount(container) {
           </div>
         </div>
         <aside class="game-sidebar">
+          <!-- Desktop sidebar stats (Score/Level/Lines) -->
           <div class="sidebar-stats">
             <div class="stat-box">
               <div class="stat-label">Score</div>
@@ -46,6 +62,9 @@ export function mount(container) {
               <div class="stat-label">Lines</div>
               <div class="stat-value" id="lines-val">0</div>
             </div>
+          </div>
+          <!-- Next + Hold: visible on desktop in sidebar, scrollable below fold on mobile -->
+          <div class="sidebar-extras">
             <div class="stat-box">
               <div class="stat-label">Nächstes</div>
               <canvas id="next-canvas" width="96" height="96"></canvas>
@@ -74,9 +93,15 @@ export function mount(container) {
   }
 
   function updateStats() {
-    document.getElementById('score-val').textContent = state.score.toLocaleString('de-DE');
-    document.getElementById('level-val').textContent = state.level + 1;
-    document.getElementById('lines-val').textContent = state.lines;
+    const score = state.score.toLocaleString('de-DE');
+    const level = state.level + 1;
+    const lines = state.lines;
+    document.getElementById('score-val').textContent = score;
+    document.getElementById('level-val').textContent = level;
+    document.getElementById('lines-val').textContent = lines;
+    document.getElementById('score-val-strip').textContent = score;
+    document.getElementById('level-val-strip').textContent = level;
+    document.getElementById('lines-val-strip').textContent = lines;
     renderMini(nextCanvas, state.next);
     renderMini(holdCanvas, state.held);
   }
@@ -99,7 +124,7 @@ export function mount(container) {
     () => state,
     dispatchAction
   );
-  cleanupTouch = bindTouchControls(container.querySelector('.game-area'), dispatchAction);
+  cleanupTouch = bindTouchControls(container.querySelector('.game-page'), dispatchAction);
 
   function loop(timestamp) {
     if (!paused && !gameOver) {

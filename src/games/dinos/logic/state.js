@@ -7,6 +7,18 @@
 export const ARCHETYPES = ['predator', 'herbivore', 'plant'];
 export const BIOMES     = ['forest', 'plain', 'river', 'rocks'];
 
+// — Welt-Geometrie —
+// Welt = 1000×1000 Einheiten, 4 Quadranten à 500×500 (siehe world.js#BIOME_LAYOUT).
+export const WORLD_SIZE = 1000;
+export const BIOME_SIZE = 500;
+// Ursprünge (x,y des oberen-linken Eckpunkts) je Biom — Quelle der Wahrheit für Position-Init und Renderer.
+export const BIOME_ORIGIN = Object.freeze({
+  forest: { x: 0,   y: 0   },
+  plain:  { x: 500, y: 0   },
+  rocks:  { x: 0,   y: 500 },
+  river:  { x: 500, y: 500 },
+});
+
 export const GENE_SCHEMAS = Object.freeze({
   predator:  ['speed', 'size', 'armor', 'aggression', 'pack_size', 'vision', 'stamina'],
   herbivore: ['speed', 'stamina', 'size', 'vigilance', 'forage_efficiency', 'herd_cohesion'],
@@ -192,6 +204,9 @@ export function createState({ mode, seed }) {
       pendingChoice: null,
     },
     encounters: [],
+    // Sekunden, in denen findEncounters unterdrückt wird — gesetzt nach fight/flee,
+    // damit der Modal nicht jeden Frame erneut auftaucht, wenn Predatoren in Reichweite bleiben.
+    encounterCooldown: 0,
     metrics: {
       peakPop:              0,
       biomesExplored:       ['plain'],
@@ -214,7 +229,7 @@ function createPopulationsTracked(rng) {
       populations[archetype][biome] = [];
       for (let i = 0; i < count; i++) {
         const id = `${archetype[0]}_0_${idxCounter++}`;
-        populations[archetype][biome].push(createIndividualTracked(archetype, id, rng));
+        populations[archetype][biome].push(createIndividualTracked(archetype, id, rng, biome));
       }
     }
   }
@@ -225,12 +240,12 @@ function createPlayerHerdTracked(rng) {
   const herd = [];
   for (let i = 0; i < POP_PER_BIOME.player; i++) {
     const id = `h_player_${i}`;
-    herd.push(createIndividualTracked('herbivore', id, rng));
+    herd.push(createIndividualTracked('herbivore', id, rng, 'plain'));
   }
   return herd;
 }
 
-function createIndividualTracked(archetype, id, rng) {
+function createIndividualTracked(archetype, id, rng, biome) {
   const schema = GENE_SCHEMAS[archetype];
   const bias   = INITIAL_GENE_BIAS[archetype] || {};
   const genes  = {};
@@ -240,6 +255,9 @@ function createIndividualTracked(archetype, id, rng) {
     const raw = (rng() + rng() + rng()) / 3;
     genes[gene] = Math.min(1, Math.max(0, raw + (mu - 0.5)));
   }
+  // Position innerhalb des Biom-Quadranten zufällig wählen — sorgt für sichtbare
+  // Streuung im Renderer und macht visionRange-basiertes findEncounters realistisch.
+  const origin = BIOME_ORIGIN[biome] ?? { x: 0, y: 0 };
   return {
     id,
     archetype,
@@ -247,6 +265,9 @@ function createIndividualTracked(archetype, id, rng) {
     hp:      1,
     stamina: 1,
     age:     0,
-    pos: { x: 0, y: 0 },
+    pos: {
+      x: origin.x + rng() * BIOME_SIZE,
+      y: origin.y + rng() * BIOME_SIZE,
+    },
   };
 }

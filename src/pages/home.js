@@ -5,7 +5,7 @@ export function mount(container) {
     <div class="home-page">
       <header class="hero">
         <h1>GameHub</h1>
-        <p>Tetris & Snake — wähle dein Spiel</p>
+        <p>Tetris, Snake & Dino-Evo — wähle dein Spiel</p>
       </header>
       <div class="game-cards">
         <a href="#/tetris" class="game-card">
@@ -18,6 +18,12 @@ export function mount(container) {
           <div class="game-card-icon">🐍</div>
           <h2>Snake</h2>
           <p>Schlange wachsen lassen</p>
+          <span class="btn-primary">Spielen</span>
+        </a>
+        <a href="#/dinos" class="game-card">
+          <div class="game-card-icon">🦖</div>
+          <h2>Dino-Evo</h2>
+          <p>Führe deine Herde durch die Generationen</p>
           <span class="btn-primary">Spielen</span>
         </a>
       </div>

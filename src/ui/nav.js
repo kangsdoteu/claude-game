@@ -10,6 +10,7 @@ export function initNav() {
     <div class="nav-links">
       <a href="#/tetris">Tetris</a>
       <a href="#/snake">Snake</a>
+      <a href="#/dinos">Dino-Evo</a>
     </div>
     <div class="nav-auth" id="nav-auth"></div>`;
 

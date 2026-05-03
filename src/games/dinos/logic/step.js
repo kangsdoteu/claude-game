@@ -10,6 +10,7 @@ import {
   WORLD_SIZE, BIOME_SIZE, BIOME_ORIGIN,
   TICK_REALTIME_DEFAULT_S, TURN_MIN_ACTIONS_PER_GEN,
   ELITISM_COUNT, TOURNAMENT_K, BLX_ALPHA, MUTATION_SIGMA, MUTATION_P,
+  MUTAGEN_SIGMA_MULT,
   makeRng, nextRandom,
 } from './state.js';
 import { selectParents, crossoverBLX, mutate } from './evo.js';
@@ -34,11 +35,20 @@ function applyAction(state, action) {
   if (action === 'fight' || action === 'flee') {
     if (next.encounters.length === 0) return next;
     const [encounter, ...rest] = next.encounters;
-    const [s2, rngVal] = nextRandom(next);
-    const rng = makeRng((s2.seed ^ s2.rngCounter) >>> 0);
-    const { newState } = resolveEncounter(encounter, s2, rng);
+
+    // Lokale RNG mit Counter-Tracking — der Resolver zieht 2–4 Werte (gauss × 2),
+    // die wir nach dem Aufruf in state.rngCounter zurückrechnen müssen, sonst
+    // bricht Determinismus.
+    const [s2] = nextRandom(next);
+    const localRng = makeRng((s2.seed ^ s2.rngCounter) >>> 0);
+    let rngCalls = 0;
+    const tracked = () => { rngCalls++; return localRng(); };
+
+    const { newState, outcome } = resolveEncounter(encounter, s2, tracked, action);
+
     next = {
       ...newState,
+      rngCounter: (newState.rngCounter + rngCalls) >>> 0,
       encounters: rest,
       // Cooldown: Flucht hält länger an als Stand-und-Kampf, weil die Herde Distanz
       // gewinnt. Verhindert, dass findEncounters den Modal direkt wieder auslöst.
@@ -46,6 +56,7 @@ function applyAction(state, action) {
       player: {
         ...newState.player,
         pendingAction: action,
+        lastEncounterOutcome: outcome,
         actionsThisGeneration: newState.player.actionsThisGeneration + 1,
       },
     };
@@ -100,9 +111,15 @@ function applyAction(state, action) {
       };
     }
     if (action.type === 'eventChoice') {
-      next = applyEvent(next, next.events.pendingChoice?.id, action.id);
+      // 'lost_juveniles/adopt' verbraucht 2 RNG-Zahlen pro neuem Tier (Position).
+      // Tracked-Wrapper sorgt dafür, dass rngCounter konsistent fortgeschrieben wird.
+      const localRng = makeRng((next.seed ^ next.rngCounter) >>> 0);
+      let rngCalls = 0;
+      const tracked = () => { rngCalls++; return localRng(); };
+      next = applyEvent(next, next.events.pendingChoice?.id, action.id, tracked);
       return {
         ...next,
+        rngCounter: (next.rngCounter + rngCalls) >>> 0,
         player: {
           ...next.player,
           actionsThisGeneration: next.player.actionsThisGeneration + 1,
@@ -474,6 +491,12 @@ function phaseMutating(state) {
   const rng = makeRng((state.seed ^ state.rngCounter) >>> 0);
   let rngCallsThisPhase = 0;
 
+  // Mutagen-Tümpel-Override: phaseSpawning der nächsten Generation cleart den Flag
+  // wieder, sodass der Multiplikator nur eine Generation gilt.
+  const sigma = state.events?.mutagenNextGen
+    ? MUTATION_SIGMA * MUTAGEN_SIGMA_MULT
+    : MUTATION_SIGMA;
+
   const nextPg = clonePendingGeneration(pg);
 
   while (processed < budget) {
@@ -482,7 +505,7 @@ function phaseMutating(state) {
 
     while (i < count && processed < budget) {
       const child    = children[i];
-      const mutGenes = mutate(child.genes, MUTATION_SIGMA, MUTATION_P, rng);
+      const mutGenes = mutate(child.genes, sigma, MUTATION_P, rng);
       // pro Gen: 1 rng() für p-Check + bis zu 2 für gauss (Box-Muller)
       rngCallsThisPhase += Object.keys(child.genes).length * 3;
       children[i] = { ...child, genes: mutGenes };
@@ -535,7 +558,7 @@ function phaseSpawning(state) {
     if (slotIdx + 1 >= ALL_SLOTS.length) {
       // Alle Slots gespawned — Generation abschließen
       const newGen  = state.generation + 1;
-      return {
+      let finalState = {
         ...state,
         populations:       newPops,
         pendingGeneration: null,
@@ -547,11 +570,33 @@ function phaseSpawning(state) {
           ...state.player,
           actionsThisGeneration: 0,
         },
+        // Mutagen-Flag zurücksetzen (er gilt nur für die soeben abgeschlossene
+        // Generation der Mutation), Encounter-Cooldown ebenfalls neu starten.
+        events: {
+          ...state.events,
+          mutagenNextGen: false,
+        },
         metrics: {
           ...state.metrics,
           generationsSurvived: newGen,
         },
       };
+
+      // Event-Trigger einmal pro Generations-Übergang: pickEvent zieht
+      // genau eine RNG-Zahl (Threshold-Check) und ggf. weitere bei Auswahl.
+      // Counter wird nach dem Aufruf konsistent fortgeschrieben.
+      const localRng = makeRng((finalState.seed ^ finalState.rngCounter) >>> 0);
+      let rngCalls = 0;
+      const tracked = () => { rngCalls++; return localRng(); };
+      const eventId = pickEvent(finalState, tracked);
+      if (eventId) {
+        finalState = applyEvent(finalState, eventId, null);
+      }
+      finalState = {
+        ...finalState,
+        rngCounter: (finalState.rngCounter + rngCalls) >>> 0,
+      };
+      return finalState;
     }
     const next = ALL_SLOTS[slotIdx + 1];
     archetype  = next.archetype;

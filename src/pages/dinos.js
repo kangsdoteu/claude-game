@@ -3,6 +3,7 @@ import {
   PHASE, BIOMES, SCORE_WEIGHT_GENERATIONS, SCORE_WEIGHT_BIOMES, SCORE_PEAKPOP_DIVISOR,
   BIOME_ORIGIN, BIOME_SIZE,
   TURN_MIN_ACTIONS_PER_GEN,
+  EVENTS,
 } from '../games/dinos/logic/index.js';
 import { render, CANVAS_SIZE, canvasToWorld } from '../games/dinos/renderer.js';
 import { bindControls } from '../games/dinos/controls.js';
@@ -29,6 +30,13 @@ const PHASE_LABEL = {
   [PHASE.BREEDING]:   'Kreuzen…',
   [PHASE.MUTATING]:   'Mutieren…',
   [PHASE.SPAWNING]:   'Spawnen…',
+};
+
+// Beschreibungstexte für Choice-Events. Schlüssel = event.id; Werte werden
+// als textContent gesetzt (kein innerHTML — XSS-defense in depth).
+const CHOICE_DETAIL = {
+  mutagen_pool:   'Eine schillernde Pfütze. Trinken stärkt die nächste Mutation drastisch — aber Form ist unvorhersehbar.',
+  lost_juveniles: 'Verirrte Jungtiere folgen euch. Aufnehmen vergrößert die Herde, schwächt aber den Durchschnitt.',
 };
 
 function computeScore(state) {
@@ -86,6 +94,14 @@ export function mount(container) {
             </div>
           </div>
 
+          <div class="dn-encounter dn-choice hidden" id="dn-choice">
+            <h3 id="dn-choice-title">Ereignis</h3>
+            <p id="dn-choice-detail"></p>
+            <div class="dn-encounter-buttons" id="dn-choice-buttons"></div>
+          </div>
+
+          <div class="dn-outcome-toast hidden" id="dn-outcome"></div>
+
           <div class="game-over-overlay hidden" id="dn-over">
             <h2>Herde verloren</h2>
             <p>Score: <strong id="dn-final-score">0</strong></p>
@@ -141,7 +157,17 @@ export function mount(container) {
   const startOverlay  = document.getElementById('dn-start');
   const overOverlay   = document.getElementById('dn-over');
   const encOverlay    = document.getElementById('dn-encounter');
+  const choiceOverlay = document.getElementById('dn-choice');
+  const outcomeEl     = document.getElementById('dn-outcome');
   const biomeListEl   = document.getElementById('dn-biomes');
+
+  // Letztes pendingChoice-Event-Id, dessen Buttons wir bereits gerendert haben.
+  // Verhindert ein Re-Render der Buttons jedes Frame, was Click-Handler doppelt registrieren würde.
+  let renderedChoiceId   = null;
+  // Letztes outcome-Objekt, das wir in der Toast-Box angezeigt haben (Referenz-Vergleich).
+  let renderedOutcomeRef = null;
+  // Auto-Hide-Timer für den Outcome-Toast — nach 4 s ausblenden.
+  let outcomeHideTimer   = null;
 
   // Biom-Karten (Sidebar)
   for (const b of BIOMES) {
@@ -302,6 +328,46 @@ export function mount(container) {
     } else {
       encOverlay.classList.add('hidden');
     }
+
+    // Choice-Overlay synchronisieren — neue Buttons nur einmal pro Pending-Event rendern.
+    const pc = state.events?.pendingChoice;
+    if (pc) {
+      choiceOverlay.classList.remove('hidden');
+      if (renderedChoiceId !== pc.id) {
+        const ev = EVENTS[pc.id];
+        document.getElementById('dn-choice-title').textContent  = ev?.label ?? 'Ereignis';
+        document.getElementById('dn-choice-detail').textContent = CHOICE_DETAIL[pc.id] ?? '';
+        const btnRow = document.getElementById('dn-choice-buttons');
+        btnRow.replaceChildren();
+        pc.choices.forEach((c, i) => {
+          const b = document.createElement('button');
+          b.className   = i === 0 ? 'btn-primary' : 'btn-ghost';
+          b.textContent = c.label;
+          b.addEventListener('click', () => {
+            controlsDispatch({ type: 'eventChoice', id: c.id });
+          });
+          btnRow.appendChild(b);
+        });
+        renderedChoiceId = pc.id;
+      }
+    } else {
+      choiceOverlay.classList.add('hidden');
+      renderedChoiceId = null;
+    }
+
+    // Outcome-Toast: nach fight/flee genau einmal anzeigen, 4 s sichtbar lassen.
+    const oc = state.player?.lastEncounterOutcome;
+    if (oc && oc !== renderedOutcomeRef) {
+      renderedOutcomeRef = oc;
+      const verb = oc.action === 'flee' ? 'Geflohen' : 'Gekämpft';
+      outcomeEl.textContent = `${verb}: ${oc.playerLosses} Verluste, ${oc.predatorLosses} Jäger gefallen`;
+      outcomeEl.classList.remove('hidden');
+      if (outcomeHideTimer) clearTimeout(outcomeHideTimer);
+      outcomeHideTimer = setTimeout(() => {
+        outcomeEl.classList.add('hidden');
+        outcomeHideTimer = null;
+      }, 4000);
+    }
   }
 
   async function endGame() {
@@ -362,6 +428,8 @@ export function mount(container) {
     destroyed = true;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
+    if (outcomeHideTimer) clearTimeout(outcomeHideTimer);
+    outcomeHideTimer = null;
     cleanupControls?.();
     cleanupControls = null;
     state = null;

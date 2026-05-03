@@ -228,13 +228,13 @@ export function mount(container) {
     lastTime = ts;
 
     // Im Turn-Mode laufen GA-Phasen synchron via step(); im Realtime-Mode pacen wir mit dt.
-    if (mode === 'realtime') {
-      state = step(state, dt, null);
-    } else {
-      // Turn-Mode: advance simulating only via dt=0 (kein automatisches Vorrücken),
-      // GA-Phasen werden durch endTurn-Action ausgelöst.
-      // dt=0 sorgt dafür, dass tick nicht steigt — Spieler kontrolliert Zeit.
-    }
+    // Bug #32: Turn-Mode braucht trotzdem einen step()-Aufruf pro Frame, damit
+    // Encounter-Detection läuft und Outcome-Animationen / Cooldown-Decay weiter
+    // ticken. dt=0 unterdrückt nur den automatischen tick → EVALUATING-Übergang;
+    // Player-Bewegung wird durch controlsDispatch mit Action-Puls (TURN_DT_PER_ACTION_S)
+    // ausgelöst, nicht durch den Frame-Loop.
+    const stepDt = mode === 'realtime' ? dt : 0;
+    state = step(state, stepDt, null);
 
     if (!state.alive) {
       endGame();

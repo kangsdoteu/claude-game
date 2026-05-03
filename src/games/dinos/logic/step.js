@@ -60,14 +60,10 @@ function applyAction(state, action) {
     ) {
       return { ...next, phase: PHASE.EVALUATING, phaseProgress: 0 };
     }
-    // endTurn zählt auch wenn kein Übergang stattfindet
-    return {
-      ...next,
-      player: {
-        ...next.player,
-        actionsThisGeneration: next.player.actionsThisGeneration + 1,
-      },
-    };
+    // Bug #39: kein Increment, wenn das Mindest nicht erreicht ist — sonst kann
+    // dreimal Q den Button freischalten, ohne dass der Spieler eine echte Aktion
+    // (Wegpunkt/Pace) ausgeführt hat.
+    return next;
   }
 
   if (action === 'split' || action === 'regroup') {

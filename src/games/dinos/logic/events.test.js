@@ -93,14 +93,13 @@ describe('events — applyEvent (choice)', () => {
     expect(s.events.pendingChoice).toBeNull();
   });
 
-  it('lost_juveniles/adopt fügt bis zu 5 Tiere hinzu (mit RNG für Position)', () => {
+  it('lost_juveniles/adopt fügt genau 5 Tiere hinzu (Issue #43)', () => {
     let s = createState({ mode: 'turn', seed: 7 });
     const before = s.player.herd.length;
     s = applyEvent(s, 'lost_juveniles', null, () => 0);
     s = applyEvent(s, 'lost_juveniles', 'adopt', () => 0.5);
     const added = s.player.herd.length - before;
-    expect(added).toBeGreaterThan(0);
-    expect(added).toBeLessThanOrEqual(5);
+    expect(added).toBe(5);
     // alle neuen Tiere haben gültige Positionen
     for (const ind of s.player.herd.slice(before)) {
       expect(ind.pos.x).toBeGreaterThanOrEqual(0);

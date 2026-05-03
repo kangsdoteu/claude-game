@@ -103,7 +103,8 @@ Hash-basiert (`#/tetris`, `#/snake`, leer = Home). Neue Routen in `src/main.js` 
 - **CSS in `src/styles/main.css`**, keine separaten Dateien pro Komponente. Nutzt CSS-Custom-Properties (`var(--accent)` etc.) – keine Hardcoded-Farben in neuen Regeln.
 - **Deutsche UI-Texte**, englische Code-Identifier. Fehlermeldungen aus Supabase werden in `src/api/auth.js#ERROR_MAP` ins Deutsche gemappt.
 - **Kommentare nur, wenn das Warum nicht offensichtlich ist.** Beispiele aus dem Bestand: „Prevent 180° turn", „user_id intentionally NOT sent". Keine Doku-Kommentare über jeden Funktionskopf.
-- **Modulgrenzen respektieren.** `pages/` darf `games/`, `api/`, `ui/` importieren. `games/` darf nichts aus `pages/` oder `ui/` importieren. `api/` darf nichts aus `games/`/`pages/`/`ui/` importieren.
+- **Modulgrenzen respektieren.** `pages/` darf `games/`, `api/`, `ui/` importieren. `games/` darf nichts aus `pages/` oder `ui/` importieren. `api/` darf nichts aus `games/`/`pages/`/`ui/` importieren. Innerhalb von `src/games/<spiel>/`, falls `logic` ein Verzeichnis ist: nur über `logic/index.js` importieren — nie direkt aus Sub-Modulen.
+- **`Math.random()` ist in `src/games/dinos/logic/**` verboten.** RNG kommt ausschließlich aus `makeRng` / `nextRandom` in `state.js`.
 
 ## Häufige Aufgaben
 

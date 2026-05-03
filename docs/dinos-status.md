@@ -45,7 +45,6 @@ Lokal, noch nicht committet:
 
 ## Phase 3 — Bekannte Lücken / offene Punkte
 
-- **Score-Cap-Mismatch (wichtig)**: Score-Formel `gen·10 + biomes·5 + floor(peakPop/50)` aus Phase 0 vs. DB-Plausibilität `score/duration ≤ 0.05` (in `004_dinos.sql`) sind nicht konsistent — schon nach 1 Generation (60 s) liefert die Formel 10–20 Punkte, das verletzt 0.05/s = max 3 Punkte/min. Page fängt das durch `Math.min(rawScore, floor(0.05*duration), 200)` defensiv ab und zeigt eine Notiz „(nach Balance-Cap)" im Game-Over-Overlay. **Saubere Lösung** ist in Phase 4 oder 5 fällig: entweder Score-Formel reduzieren (Faktor ~0.3) **oder** `005_dinos_recalibrate.sql` mit lockerer Plausibilität (alte Migration nicht editieren). Maintainer-Entscheidung.
 - **Turn-Mode**: Picker zeigt den Button, `createState({mode:'turn',…})` wird gerufen, GA-Phasen laufen synchron via `endTurn`. Aber zwischen den Aktionen passiert visuell nichts, weil `loop()` für `turn` `dt=0` benutzt. Phase 4 ist explizit dafür da.
 - **Mobile-Touch**: Pikmin-Stil-Waypoint reagiert auf `click` (funktioniert auf Touch), aber kein dezidierter Touch-Pfad oder D-Pad. Mobile-Layout-Test steht aus.
 - **Renderer-Polish**: Player-Herd-Mitglieder stapeln sich am Waypoint (kein Spread/Formation). Pop-Trend-Pfeile in den Biom-Karten fehlen — bisher nur Zahl.
@@ -65,7 +64,7 @@ Schon hart in `src/games/dinos/logic/state.js` codiert (PR #28). Nur referenzhal
 - **GA**: BLX-α (α=0.3), Gauß-Mutation (σ=0.08, p=0.15), Tournament-Selection (k=3), 1-Elitismus.
 - **Pop-Caps**: 250 bewegte Entitäten, 4 Biome simultan simuliert (nur aktives gerendert).
 - **Score-Formel**: `gen·10 + biomes·5 + floor(peak_pop/50)`.
-- **DB-Caps**: `dinos_realtime` ≤ 200 (`score/duration <= 0.05`), `dinos_turn` ≤ 5000.
+- **DB-Caps**: `dinos_realtime` ≤ 400 (`score/duration ≤ 0.4`), `dinos_turn` ≤ 5000. Kalibriert via `005_dinos_recalibrate.sql` (Issue #36); ältere Werte (200 / 0.05) waren Einheitenfehler.
 - **Ticks**: Realtime 45–60 s pro Generation (`MIN_GEN_SECONDS=45`), Turn-Mode mind. 3 Spieler-Aktionen pro Generation.
 
 ## Kanonische Quellen

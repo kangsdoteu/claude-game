@@ -20,7 +20,7 @@ CREATE TABLE public.scores (
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT tetris_score_limit          CHECK (game <> 'tetris'         OR score <= 10000000),
     CONSTRAINT snake_score_limit           CHECK (game <> 'snake'          OR score <= 100000),
-    CONSTRAINT dinos_realtime_score_limit  CHECK (game <> 'dinos_realtime' OR score <= 200),
+    CONSTRAINT dinos_realtime_score_limit  CHECK (game <> 'dinos_realtime' OR score <= 400),
     CONSTRAINT dinos_turn_score_limit      CHECK (game <> 'dinos_turn'     OR score <= 5000)
 );
 

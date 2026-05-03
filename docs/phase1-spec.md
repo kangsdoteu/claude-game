@@ -502,6 +502,12 @@ Keine Zirkel. `step.js` ist die einzige Datei mit allen vier Abhängigkeiten.
 
 ## E. Migration `004_dinos.sql` Review
 
+> **Aktualität:** Die hier dokumentierten Werte (`score <= 200`, `score/duration <= 0.05`)
+> sind die historischen Phase-0-Vorgaben. Sie wurden mit Issue #36 / `005_dinos_recalibrate.sql`
+> auf `400` und `0.4` rekalibriert, weil die Phase-0-Score-Formel mit `0.05` mathematisch
+> kollidierte (Einheitenfehler). Dieser Abschnitt bleibt als Snapshot des Phase-1-Reviews
+> stehen; aktuelle DB-Werte stehen in `docs/dinos-status.md` unter „Verbindliche Werte".
+
 Abgleich gegen `001_schema.sql` + `002_rls.sql` (eingespielter Bestand):
 
 ### E.1 Befunde

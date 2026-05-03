@@ -101,15 +101,6 @@ export function mount(container) {
             <div class="stat-box"><div class="stat-label">Phase</div><div class="stat-value" id="dn-phase">—</div></div>
             <div class="stat-box"><div class="stat-label">Peak Pop</div><div class="stat-value" id="dn-peak">0</div></div>
 
-            <div class="stat-box hidden" id="dn-actions-box">
-              <div class="stat-label">Aktionen</div>
-              <div class="stat-value"><span id="dn-actions-count">0</span> / ${TURN_MIN_ACTIONS_PER_GEN}</div>
-            </div>
-
-            <button type="button" class="btn-primary hidden" id="dn-end-turn" disabled>
-              <span id="dn-end-turn-label">Zug beenden (noch ${TURN_MIN_ACTIONS_PER_GEN})</span>
-            </button>
-
             <div class="stat-box dn-biome-list">
               <div class="stat-label">Biome</div>
               <div class="dn-biomes" id="dn-biomes"></div>
@@ -126,6 +117,21 @@ export function mount(container) {
               </dl>
             </div>
           </div>
+
+          <!-- Turn-Mode-Steuerung außerhalb von .sidebar-stats: das Element-Set
+               wird auf Mobile (≤700px) per .sidebar-stats { display: none; }
+               versteckt; #dn-actions-box und #dn-end-turn müssen aber sichtbar
+               bleiben, weil sie die Kerninteraktion des Turn-Mode sind (Issue #42). -->
+          <div class="dn-turn-controls hidden" id="dn-turn-controls">
+            <div class="stat-box" id="dn-actions-box">
+              <div class="stat-label">Aktionen</div>
+              <div class="stat-value"><span id="dn-actions-count">0</span> / ${TURN_MIN_ACTIONS_PER_GEN}</div>
+            </div>
+            <button type="button" class="btn-primary" id="dn-end-turn" disabled>
+              <span id="dn-end-turn-label">Zug beenden (noch ${TURN_MIN_ACTIONS_PER_GEN})</span>
+            </button>
+          </div>
+
           <div id="dn-leaderboard"></div>
         </aside>
       </div>
@@ -210,8 +216,7 @@ export function mount(container) {
       document.getElementById('dn-help-q-row').classList.remove('hidden');
       document.getElementById('dn-help-q-desc').classList.remove('hidden');
       document.getElementById('dn-hint-turn').classList.remove('hidden');
-      document.getElementById('dn-actions-box').classList.remove('hidden');
-      document.getElementById('dn-end-turn').classList.remove('hidden');
+      document.getElementById('dn-turn-controls').classList.remove('hidden');
     }
 
     cleanupControls = bindControls(canvas, controlsDispatch, () => state);

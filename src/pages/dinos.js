@@ -220,10 +220,14 @@ export function mount(container) {
 
   // Im Turn-Mode rückt jede „normale" Spieler-Aktion (Wegpunkt, Pace) den Sim-Tick um
   // TURN_DT_PER_ACTION_S vor — sichtbares Welt-Feedback pro Klick. Meta-Aktionen
-  // (fight/flee/endTurn) bekommen kein dt: fight/flee haben einen Cooldown, der
-  // sonst sofort verbraucht würde; endTurn löst die GA-Schleife synchron aus.
+  // (fight/flee/endTurn/eventChoice) bekommen kein dt: fight/flee haben einen
+  // Cooldown, endTurn löst die GA-Schleife synchron aus, eventChoice schließt
+  // einen Modal — alle drei sind Entscheidungen, keine Welt-Aktionen (Issue #44).
   function controlsDispatch(action) {
-    const isMeta = action === 'endTurn' || action === 'fight' || action === 'flee';
+    const isMeta = action === 'endTurn'
+                || action === 'fight'
+                || action === 'flee'
+                || (typeof action === 'object' && action?.type === 'eventChoice');
     const pulseDt = (mode === 'turn' && !isMeta) ? TURN_DT_PER_ACTION_S : 0;
     dispatch(action, pulseDt);
   }

@@ -33,10 +33,14 @@ CREATE POLICY "scores: insert own"
     ON public.scores FOR INSERT WITH CHECK (
         auth.uid() IS NOT NULL
         -- Score limits per game
-        AND (game <> 'tetris' OR score <= 10000000)
-        AND (game <> 'snake'  OR score <= 100000)
-        -- Score/time plausibility
+        AND (game <> 'tetris'          OR score <= 10000000)
+        AND (game <> 'snake'           OR score <= 100000)
+        AND (game <> 'dinos_realtime'  OR score <= 200)
+        AND (game <> 'dinos_turn'      OR score <= 5000)
+        -- Score/time plausibility (global)
         AND (score::float / duration_seconds) <= 100000
+        -- dinos_realtime: max 0.05 Generationen/Sekunde (sehr langsamer Prozess)
+        AND (game <> 'dinos_realtime' OR (score::float / duration_seconds) <= 0.05)
         -- Rate limiting
         AND public.count_recent_scores(auth.uid(), 3600) < 10
         AND public.count_recent_scores(auth.uid(), 60)   < 2

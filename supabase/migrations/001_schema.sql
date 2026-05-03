@@ -1,5 +1,5 @@
 -- Game type enum
-CREATE TYPE public.game_type AS ENUM ('tetris', 'snake');
+CREATE TYPE public.game_type AS ENUM ('tetris', 'snake', 'dinos_realtime', 'dinos_turn');
 
 -- User profiles (linked to auth.users)
 CREATE TABLE public.profiles (
@@ -18,8 +18,10 @@ CREATE TABLE public.scores (
     score            INTEGER NOT NULL CHECK (score >= 0),
     duration_seconds INTEGER NOT NULL CHECK (duration_seconds >= 5 AND duration_seconds <= 7200),
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT tetris_score_limit CHECK (game <> 'tetris' OR score <= 10000000),
-    CONSTRAINT snake_score_limit  CHECK (game <> 'snake'  OR score <= 100000)
+    CONSTRAINT tetris_score_limit          CHECK (game <> 'tetris'         OR score <= 10000000),
+    CONSTRAINT snake_score_limit           CHECK (game <> 'snake'          OR score <= 100000),
+    CONSTRAINT dinos_realtime_score_limit  CHECK (game <> 'dinos_realtime' OR score <= 200),
+    CONSTRAINT dinos_turn_score_limit      CHECK (game <> 'dinos_turn'     OR score <= 5000)
 );
 
 CREATE INDEX idx_scores_game_score      ON public.scores(game, score DESC);

@@ -195,13 +195,19 @@ export function createState({ mode, seed }) {
       biome:                'plain',
       herd:                 playerHerd,
       pendingAction:        null,
+      // Letztes Encounter-Outcome (für UI „du hast 2 verloren, Feind 1") — null bis fight/flee feuert.
+      lastEncounterOutcome: null,
       actionsThisGeneration: 0,
       waypoint:             null,
       pace:                 'walk',
     },
     events: {
-      active:        [],
-      pendingChoice: null,
+      active:         [],
+      pendingChoice:  null,
+      // True für genau eine Generation, wenn der Spieler im Mutagen-Tümpel-Event
+      // „Trinken" gewählt hat — phaseMutating multipliziert dann σ mit MUTAGEN_SIGMA_MULT.
+      // phaseSpawning cleart den Flag bei der Generations-Finalisierung.
+      mutagenNextGen: false,
     },
     encounters: [],
     // Sekunden, in denen findEncounters unterdrückt wird — gesetzt nach fight/flee,

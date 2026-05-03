@@ -618,6 +618,39 @@ dialog::backdrop {
   background: rgba(0,0,0,0.2);
 }
 
+/* Choice-Modal: erbt vom Encounter, nutzt accent (gelb/grün) statt danger,
+   damit Spieler Ereignisse visuell von Predator-Begegnungen trennt. */
+.dn-encounter.dn-choice {
+  border-color: var(--accent);
+}
+.dn-encounter.dn-choice h3 {
+  color: var(--accent);
+}
+
+/* Outcome-Toast: oben mittig über dem Canvas. Wird 4 s sichtbar gehalten,
+   dann von Page-Code via .hidden ausgeblendet. */
+.dn-outcome-toast {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  z-index: 9;
+  pointer-events: none;
+  animation: dn-toast-in 0.25s ease-out;
+}
+
+@keyframes dn-toast-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .dn-final-detail {
   font-size: 0.85rem;
   color: var(--text-muted);

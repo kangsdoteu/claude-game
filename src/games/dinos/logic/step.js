@@ -590,7 +590,10 @@ function phaseSpawning(state) {
       const tracked = () => { rngCalls++; return localRng(); };
       const eventId = pickEvent(finalState, tracked);
       if (eventId) {
-        finalState = applyEvent(finalState, eventId, null);
+        // tracked rng auch an applyEvent durchreichen — aktuell ziehen die
+        // auto-Events keine RNG-Zahlen, aber zukünftige könnten, und der
+        // counter-write am Ende dieses Blocks würde sonst lautlos drift'en.
+        finalState = applyEvent(finalState, eventId, null, tracked);
       }
       finalState = {
         ...finalState,

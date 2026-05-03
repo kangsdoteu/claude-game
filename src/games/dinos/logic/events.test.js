@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { createState, MUTAGEN_SIGMA_MULT } from './state.js';
+import { createState, MUTAGEN_SIGMA_MULT, makeRng } from './state.js';
 import { EVENTS, pickEvent, applyEvent } from './events.js';
 import { step } from './step.js';
+import { mutate } from './evo.js';
 import { PHASE } from './state.js';
 
 describe('events — pickEvent', () => {
@@ -133,6 +134,29 @@ describe('events — Mutagen-Tümpel-Override in Mutation-Phase', () => {
 
   it('MUTAGEN_SIGMA_MULT ist ein positiver Multiplikator > 1', () => {
     expect(MUTAGEN_SIGMA_MULT).toBeGreaterThan(1);
+  });
+
+  it('mutagenNextGen=true → mutate() ruft an mit erhöhtem σ', () => {
+    // Direkter Vergleich: wir messen Streuung der Genwerte direkt nach
+    // einer Mutation-Pass auf einer Kohorte mit konstanten Genen 0.5.
+    // Bei σ × 3 ist die Standardabweichung um den Faktor ~3 größer.
+    // Wir nutzen die mutate()-Hilfe mit einem festen rng-Wrapper.
+    const constGenes = () => ({ speed: 0.5, size: 0.5, armor: 0.5, aggression: 0.5, pack_size: 0.5, vision: 0.5, stamina: 0.5 });
+    function spread(sigma, seedOff) {
+      const rng = makeRng((4711 ^ seedOff) >>> 0);
+      let sumSq = 0, n = 0;
+      for (let k = 0; k < 200; k++) {
+        const g = mutate(constGenes(), sigma, /*p=*/1.0, rng);
+        for (const v of Object.values(g)) {
+          sumSq += (v - 0.5) ** 2;
+          n++;
+        }
+      }
+      return Math.sqrt(sumSq / n);
+    }
+    const baseline = spread(0.08, 1);
+    const mutagen  = spread(0.08 * MUTAGEN_SIGMA_MULT, 2);
+    expect(mutagen).toBeGreaterThan(baseline * 1.5);
   });
 });
 

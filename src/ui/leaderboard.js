@@ -20,11 +20,17 @@ export async function renderLeaderboard(container, activeGame = 'tetris') {
   const tabs = document.createElement('div');
   tabs.className = 'lb-tabs';
   tabs.setAttribute('role', 'tablist');
-  ['tetris', 'snake'].forEach(game => {
+  const TAB_LABELS = {
+    tetris:         'Tetris',
+    snake:          'Snake',
+    dinos_realtime: 'Dino-Evo (RT)',
+    dinos_turn:     'Dino-Evo (Turn)',
+  };
+  ['tetris', 'snake', 'dinos_realtime', 'dinos_turn'].forEach(game => {
     const btn = document.createElement('button');
     btn.setAttribute('role', 'tab');
     btn.setAttribute('type', 'button');
-    btn.textContent = game.charAt(0).toUpperCase() + game.slice(1);
+    btn.textContent = TAB_LABELS[game] ?? game;
     btn.dataset.game = game;
     if (game === activeGame) btn.classList.add('active');
     tabs.appendChild(btn);

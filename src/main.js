@@ -8,6 +8,7 @@ const routes = {
   '':       () => import('./pages/home.js'),
   'tetris': () => import('./pages/tetris.js'),
   'snake':  () => import('./pages/snake.js'),
+  'dinos':  () => import('./pages/dinos.js'),
 };
 
 async function router() {

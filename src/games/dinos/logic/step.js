@@ -7,12 +7,13 @@ import {
   PHASE, PHASE_BUDGET_INDIVIDUALS,
   ARCHETYPES, BIOMES,
   POP_PER_BIOME, HARD_ENTITY_CAP,
+  WORLD_SIZE, BIOME_SIZE, BIOME_ORIGIN,
   TICK_REALTIME_DEFAULT_S, TURN_MIN_ACTIONS_PER_GEN,
   ELITISM_COUNT, TOURNAMENT_K, BLX_ALPHA, MUTATION_SIGMA, MUTATION_P,
   makeRng, nextRandom,
 } from './state.js';
 import { selectParents, crossoverBLX, mutate } from './evo.js';
-import { findEncounters, resolveEncounter } from './world.js';
+import { findEncounters, resolveEncounter, getBiomeAt } from './world.js';
 import { pickEvent, applyEvent } from './events.js';
 
 // ============================================================
@@ -39,6 +40,9 @@ function applyAction(state, action) {
     next = {
       ...newState,
       encounters: rest,
+      // Cooldown: Flucht hält länger an als Stand-und-Kampf, weil die Herde Distanz
+      // gewinnt. Verhindert, dass findEncounters den Modal direkt wieder auslöst.
+      encounterCooldown: action === 'flee' ? 15 : 8,
       player: {
         ...newState.player,
         pendingAction: action,
@@ -172,22 +176,101 @@ function clonePendingGeneration(pg) {
 // PHASE_BUDGET_INDIVIDUALS steuert, wie viele Individuen pro Frame verarbeitet werden.
 // ============================================================
 
+// Bewegungs-Helfer (deterministisch, kein RNG).
+function clampWorld(pos) {
+  return {
+    x: Math.max(0, Math.min(WORLD_SIZE - 1, pos.x)),
+    y: Math.max(0, Math.min(WORLD_SIZE - 1, pos.y)),
+  };
+}
+
+function moveTowards(pos, target, maxStep) {
+  const dx = target.x - pos.x;
+  const dy = target.y - pos.y;
+  const distSq = dx * dx + dy * dy;
+  if (distSq < 0.5) return pos;
+  const dist = Math.sqrt(distSq);
+  const stepLen = Math.min(dist, maxStep);
+  return clampWorld({
+    x: pos.x + (dx / dist) * stepLen,
+    y: pos.y + (dy / dist) * stepLen,
+  });
+}
+
 function phaseSimulating(state, dt) {
-  // dt in Sekunden akkumulieren; prüfen ob Generation endet
   const newTick = state.tick + dt;
 
-  // TODO: Pflanzen-Wachstum, Stamina-Regeneration, Bewegung — Phase 2+
+  // 1. Player-Herd zum Waypoint driften (deterministisch, kein RNG).
+  let newHerd = state.player.herd;
+  if (state.player.waypoint && newHerd.length > 0) {
+    const wp     = state.player.waypoint;
+    const paceK  = state.player.pace === 'run' ? 1.6 : 1.0;
+    newHerd = newHerd.map(ind => {
+      const speed   = ind.genes.speed ?? 0.5;
+      const maxStep = (40 + speed * 60) * paceK * dt;
+      return { ...ind, pos: moveTowards(ind.pos, wp, maxStep) };
+    });
+  }
 
-  // Encounter prüfen (nur wenn keine offenen Encounters warten)
-  let s = { ...state, tick: newTick };
-  if (s.encounters.length === 0) {
+  // 2. Player-Biom aus Herd-Mittelpunkt ableiten; biomesExplored ergänzen.
+  let playerBiome      = state.player.biome;
+  let biomesExplored   = state.metrics.biomesExplored;
+  if (newHerd.length > 0) {
+    let cx = 0, cy = 0;
+    for (const ind of newHerd) { cx += ind.pos.x; cy += ind.pos.y; }
+    cx /= newHerd.length; cy /= newHerd.length;
+    playerBiome = getBiomeAt(cx, cy);
+    if (!biomesExplored.includes(playerBiome)) {
+      biomesExplored = [...biomesExplored, playerBiome];
+    }
+  }
+
+  // 3. Predatoren im aktiven Biom verfolgen den nächstgelegenen Herd-Member.
+  let newPops = state.populations;
+  if (newHerd.length > 0) {
+    newPops = { ...state.populations, predator: { ...state.populations.predator } };
+    for (const biome of BIOMES) {
+      const preds = newPops.predator[biome];
+      if (!preds.length || biome !== playerBiome) continue;
+      newPops.predator[biome] = preds.map(pred => {
+        let best = newHerd[0], bestSq = Infinity;
+        for (const h of newHerd) {
+          const dx = h.pos.x - pred.pos.x, dy = h.pos.y - pred.pos.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < bestSq) { bestSq = d2; best = h; }
+        }
+        const speed   = pred.genes.speed ?? 0.5;
+        const maxStep = (30 + speed * 50) * dt;
+        return { ...pred, pos: moveTowards(pred.pos, best.pos, maxStep) };
+      });
+    }
+  }
+
+  // Cooldown nach fight/flee abklingen lassen.
+  const newCooldown = Math.max(0, (state.encounterCooldown ?? 0) - dt);
+
+  let s = {
+    ...state,
+    tick:        newTick,
+    populations: newPops,
+    encounterCooldown: newCooldown,
+    player: {
+      ...state.player,
+      herd:  newHerd,
+      biome: playerBiome,
+    },
+    metrics: { ...state.metrics, biomesExplored },
+  };
+
+  // 4. Encounter-Detection (nur wenn keine offenen Encounters warten und Cooldown abgelaufen ist).
+  if (s.encounters.length === 0 && newCooldown <= 0) {
     const found = findEncounters(s);
     if (found.length > 0) {
       s = { ...s, encounters: found };
     }
   }
 
-  // Peak-Population tracken
+  // 5. Peak-Population tracken.
   let total = 0;
   for (const archetype of ARCHETYPES) {
     for (const biome of BIOMES) {
@@ -199,7 +282,7 @@ function phaseSimulating(state, dt) {
     s = { ...s, metrics: { ...s.metrics, peakPop: total } };
   }
 
-  // Realtime: Übergang wenn tick >= Schwellenwert
+  // 6. Realtime-Übergang wenn tick-Schwellenwert erreicht.
   if (s.mode === 'realtime' && s.tick >= TICK_REALTIME_DEFAULT_S) {
     return { ...s, phase: PHASE.EVALUATING, phaseProgress: 0, tick: 0 };
   }
@@ -353,12 +436,16 @@ function phaseBreeding(state) {
       if (pairIdx < 0 || pairIdx >= pairs.length) break;
       const [pA, pB] = pairs[pairIdx];
       const child = crossoverBLX(pA, pB, BLX_ALPHA, rng);
-      // BLX-α benötigt eine rng-Zahl pro Gen
-      rngCallsThisPhase += Object.keys(pA.genes).length;
+      // BLX-α benötigt eine rng-Zahl pro Gen + 2 für Position
+      rngCallsThisPhase += Object.keys(pA.genes).length + 2;
       const genIdx = state.generation;
       const slotIdx = slotIndex(archetype, biome);
       child.id  = `${archetype[0]}_${genIdx + 1}_${slotIdx}_${children.length}`;
-      child.pos = { x: 0, y: 0 };
+      const origin = BIOME_ORIGIN[biome];
+      child.pos = {
+        x: origin.x + rng() * BIOME_SIZE,
+        y: origin.y + rng() * BIOME_SIZE,
+      };
       children.push(child);
       processed++;
     }

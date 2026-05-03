@@ -274,7 +274,7 @@ a:hover { text-decoration: underline; }
 .leaderboard { background: var(--surface); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 1rem; }
 .leaderboard h3 { font-size: 1rem; margin-bottom: 0.75rem; }
 
-.lb-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.lb-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
 .lb-tabs [role=tab] {
   padding: 0.3rem 0.9rem;
   background: transparent;
@@ -541,6 +541,135 @@ dialog::backdrop {
   .game-cards { grid-template-columns: 1fr; }
   .controls-help { display: none; }
   #nav { padding: 0 1rem; }
+}
+
+/* ===== Dino-Evo: spezifische Komponenten ===== */
+.dn-mode-picker {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  justify-content: center;
+}
+
+.dn-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 28rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.dn-hint kbd {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  background: rgba(255,255,255,0.05);
+}
+
+.dn-encounter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface2);
+  border: 2px solid var(--danger);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  min-width: 280px;
+  max-width: 90%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  text-align: center;
+  z-index: 10;
+}
+
+.dn-encounter h3 { color: var(--danger); margin-bottom: 0.5rem; }
+.dn-encounter p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+.dn-encounter-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.dn-encounter-buttons kbd {
+  margin-left: 0.4rem;
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  background: rgba(0,0,0,0.2);
+}
+
+.dn-final-detail {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0;
+}
+
+.dn-biome-list { padding: 0.5rem 0.75rem; }
+
+.dn-biomes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.dn-biome-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background .15s, border-color .15s;
+}
+
+.dn-biome-card:hover {
+  background: rgba(255,255,255,0.07);
+}
+
+.dn-biome-card.active {
+  border-color: var(--accent2);
+  background: rgba(44, 182, 125, 0.08);
+}
+
+.dn-biome-name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.dn-biome-pop {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+#dn-canvas {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  background: #000;
+  cursor: crosshair;
+  border-radius: var(--radius);
+}
+
+/* Mobile: Dino-Evo hat kein D-pad — die generische .game-area canvas-Regel
+   in der ≤700px-Media-Query zieht aber --dpad-h ab. Hier ID-spezifisch
+   (höhere Specificity) korrigieren, damit das Canvas die volle Höhe nutzt
+   und die game-page nicht mit Phantom-Padding endet. */
+@media (max-width: 700px) {
+  .game-area #dn-canvas {
+    max-height: calc(100dvh - var(--nav-h) - var(--score-strip-h) - var(--safe-bottom) - 16px);
+  }
+  .game-page:has(#dn-canvas) {
+    padding-bottom: var(--safe-bottom);
+  }
 }
 
 /* Landscape: canvas left, D-pad right; leaderboard hidden during play */

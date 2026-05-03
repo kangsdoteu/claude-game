@@ -68,6 +68,8 @@ Diese Trennung ist die Grundlage dafür, dass die Spiele sich später ohne DOM t
 
 State-Objekte werden **immer immutabel** behandelt: `{ ...state, foo: bar }`, nie `state.foo = bar`. Tetris-`board` und Snake-`snake` werden vor dem Schreiben kopiert (`.map(row => [...row])` bzw. neuer Array).
 
+**Externe Reinheit, interne Mutation erlaubt.** Eine Logic-Funktion (`dispatch`, `step`, …) muss als Black Box pure sein: Eingabe-State darf nicht mutiert werden, Rückgabe ist neuer State. *Innerhalb* der Funktion darf jedoch eine flache Arbeitskopie der Top-Level-Felder mutiert werden, solange das übergebene `state`-Argument selbst unangetastet bleibt. Das ist relevant, wenn pro Tick viele Entitäten verarbeitet werden (z. B. Population in einer Sim) — `entities.map(e => ({...e}))` pro Frame erzeugt sonst GC-Druck. Tetris’ `lockPiece` zeigt die Variante mit `board.map(row => [...row])` als kopierte Arbeitskopie. Externe Aufrufer dürfen sich darauf verlassen, dass der alte State unverändert bleibt — diese Garantie ist die Grundlage für Tests und Replay.
+
 ### Keyboard-Listener
 
 Globale `keydown`-Handler **müssen** früh ausspringen, wenn das Event aus einem Input-Feld oder offenen Dialog kommt:
@@ -89,6 +91,10 @@ Das ist bereits in beiden `controls.js` so umgesetzt – beim Ergänzen neuer Ta
 ### Routing
 
 Hash-basiert (`#/tetris`, `#/snake`, leer = Home). Neue Routen in `src/main.js` im `routes`-Objekt registrieren. Lazy-Loading via dynamischem `import()` ist Pflicht, sonst werden alle Spiele bei jedem Page-Load mitgeladen.
+
+### Tests
+
+`npm test` führt Vitest aus. Test-Pflicht ist **scope-begrenzt auf `src/games/dinos/logic/**/*.test.js`** (siehe `vitest.config.js`). Tetris/Snake bleiben bewusst ungetestet — sie sind klein genug, dass visuelle Verifikation reicht. Die Dino-Evo-Sim hat emergent behavior (GA, Selektion), die nicht visuell verifizierbar ist; dort sind deterministische Unit-Tests Pflicht. Vitest ist devDep, geht **nicht** in den Production-Bundle. Wer Test-Coverage auf andere Spiele ausweiten will: erst diskutieren, nicht stillschweigend ergänzen.
 
 ## Stil & Code-Geschmack
 

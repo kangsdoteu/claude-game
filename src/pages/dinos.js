@@ -2,12 +2,18 @@ import {
   createState, step,
   PHASE, BIOMES, SCORE_WEIGHT_GENERATIONS, SCORE_WEIGHT_BIOMES, SCORE_PEAKPOP_DIVISOR,
   BIOME_ORIGIN, BIOME_SIZE,
+  TURN_MIN_ACTIONS_PER_GEN,
 } from '../games/dinos/logic/index.js';
 import { render, CANVAS_SIZE, canvasToWorld } from '../games/dinos/renderer.js';
 import { bindControls } from '../games/dinos/controls.js';
 import { saveScore } from '../api/scores.js';
 import { getUser } from '../api/auth.js';
 import { renderLeaderboard, invalidate } from '../ui/leaderboard.js';
+
+// Sekunden Sim-Zeit, die im Turn-Mode pro Spieler-Aktion (außer fight/flee/endTurn)
+// vorrücken. Mit 3 Mindest-Aktionen × 8 s = 24 s pro Runde, plus die GA-Phase auf
+// endTurn — kommt grob auf Realtime-Tempo (60 s/Generation).
+const TURN_DT_PER_ACTION_S = 8;
 
 const BIOME_LABEL = {
   forest: 'Wald',
@@ -95,6 +101,15 @@ export function mount(container) {
             <div class="stat-box"><div class="stat-label">Phase</div><div class="stat-value" id="dn-phase">—</div></div>
             <div class="stat-box"><div class="stat-label">Peak Pop</div><div class="stat-value" id="dn-peak">0</div></div>
 
+            <div class="stat-box hidden" id="dn-actions-box">
+              <div class="stat-label">Aktionen</div>
+              <div class="stat-value"><span id="dn-actions-count">0</span> / ${TURN_MIN_ACTIONS_PER_GEN}</div>
+            </div>
+
+            <button type="button" class="btn-primary hidden" id="dn-end-turn" disabled>
+              <span id="dn-end-turn-label">Zug beenden (noch ${TURN_MIN_ACTIONS_PER_GEN})</span>
+            </button>
+
             <div class="stat-box dn-biome-list">
               <div class="stat-label">Biome</div>
               <div class="dn-biomes" id="dn-biomes"></div>
@@ -137,7 +152,7 @@ export function mount(container) {
       if (state.encounters.length > 0) return;
       const o = BIOME_ORIGIN[b];
       const target = { x: o.x + BIOME_SIZE / 2, y: o.y + BIOME_SIZE / 2 };
-      state = step(state, 0, { type: 'setWaypoint', x: target.x, y: target.y });
+      controlsDispatch({ type: 'setWaypoint', x: target.x, y: target.y });
     });
     biomeListEl.appendChild(btn);
   }
@@ -152,16 +167,33 @@ export function mount(container) {
     mount(container);
   });
 
-  // Encounter-Buttons
+  // Encounter-Buttons — kein dt-Puls (Encounter-Cooldown würde sonst direkt verfallen).
   document.getElementById('dn-fight').addEventListener('click', () => { if (state) state = step(state, 0, 'fight'); });
   document.getElementById('dn-flee').addEventListener('click',  () => { if (state) state = step(state, 0, 'flee');  });
+
+  // End-Turn-Button — synchroner GA-Lauf in step.js (Spec B.5), kein dt-Puls.
+  document.getElementById('dn-end-turn').addEventListener('click', () => {
+    if (!state || !state.alive || !state.started) return;
+    if (state.encounters.length > 0) return;
+    state = step(state, 0, 'endTurn');
+  });
 
   // Leaderboard initial laden — Realtime-Tab ist Default; user kann im LB-Tab umschalten.
   renderLeaderboard(document.getElementById('dn-leaderboard'), 'dinos_realtime');
 
-  function dispatch(action) {
+  function dispatch(action, dt = 0) {
     if (!state) return;
-    state = step(state, 0, action);
+    state = step(state, dt, action);
+  }
+
+  // Im Turn-Mode rückt jede „normale" Spieler-Aktion (Wegpunkt, Pace) den Sim-Tick um
+  // TURN_DT_PER_ACTION_S vor — sichtbares Welt-Feedback pro Klick. Meta-Aktionen
+  // (fight/flee/endTurn) bekommen kein dt: fight/flee haben einen Cooldown, der
+  // sonst sofort verbraucht würde; endTurn löst die GA-Schleife synchron aus.
+  function controlsDispatch(action) {
+    const isMeta = action === 'endTurn' || action === 'fight' || action === 'flee';
+    const pulseDt = (mode === 'turn' && !isMeta) ? TURN_DT_PER_ACTION_S : 0;
+    dispatch(action, pulseDt);
   }
 
   function startGame(selectedMode) {
@@ -178,9 +210,11 @@ export function mount(container) {
       document.getElementById('dn-help-q-row').classList.remove('hidden');
       document.getElementById('dn-help-q-desc').classList.remove('hidden');
       document.getElementById('dn-hint-turn').classList.remove('hidden');
+      document.getElementById('dn-actions-box').classList.remove('hidden');
+      document.getElementById('dn-end-turn').classList.remove('hidden');
     }
 
-    cleanupControls = bindControls(canvas, dispatch, () => state);
+    cleanupControls = bindControls(canvas, controlsDispatch, () => state);
     lastTime = performance.now();
     rafId = requestAnimationFrame(loop);
   }
@@ -234,6 +268,25 @@ export function mount(container) {
       if (popEl) popEl.textContent = popN;
       card.classList.toggle('active', state.player.biome === b);
     });
+
+    // Turn-Mode: Action-Counter + End-Turn-Button-State
+    if (mode === 'turn') {
+      const actions = state.player.actionsThisGeneration;
+      setText('dn-actions-count', actions);
+      const btn   = document.getElementById('dn-end-turn');
+      const label = document.getElementById('dn-end-turn-label');
+      if (btn && label) {
+        if (actions >= TURN_MIN_ACTIONS_PER_GEN) {
+          btn.disabled = false;
+          label.textContent = 'Zug beenden';
+          btn.classList.add('dn-pulse');
+        } else {
+          btn.disabled = true;
+          label.textContent = `Zug beenden (noch ${TURN_MIN_ACTIONS_PER_GEN - actions})`;
+          btn.classList.remove('dn-pulse');
+        }
+      }
+    }
 
     // Encounter-Overlay synchronisieren
     if (state.encounters.length > 0) {

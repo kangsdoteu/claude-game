@@ -265,11 +265,13 @@ export function mount(container) {
     const statusEl     = document.getElementById('dn-save-status');
     const leaderboardEl = document.getElementById('dn-leaderboard');
 
-    // DB-Cap (realtime): score ≤ 200 UND score/duration ≤ 0.05.
-    // Der Server lehnt sonst mit 42501 ab — wir cappen defensiv, damit der Save klappt.
+    // DB-Cap (realtime): score ≤ 400 UND score/duration ≤ 0.4 (siehe 005_dinos_recalibrate.sql).
+    // Im Normalfall greift dieser Cap nicht — er bleibt als stille Defense-in-Depth, falls
+    // ein Genie-Run die kalibrierten Werte reißt oder eine ältere Migration in einem Fork
+    // läuft. Kein UI-Hinweis im Capped-Fall: Spieler soll nicht über DB-Limits stolpern.
     const game        = mode === 'turn' ? 'dinos_turn' : 'dinos_realtime';
-    const ratioCap    = mode === 'turn' ? Infinity : Math.floor(0.05 * duration);
-    const absCap      = mode === 'turn' ? 5000 : 200;
+    const ratioCap    = mode === 'turn' ? Infinity : Math.floor(0.4 * duration);
+    const absCap      = mode === 'turn' ? 5000 : 400;
     const saveScoreVal = Math.max(0, Math.min(rawScore, absCap, ratioCap));
 
     const user = await getUser();
@@ -285,11 +287,7 @@ export function mount(container) {
       return;
     }
 
-    if (saveScoreVal < rawScore) {
-      statusEl.textContent = `Score wird gespeichert (${saveScoreVal} nach Balance-Cap)…`;
-    } else {
-      statusEl.textContent = 'Score wird gespeichert…';
-    }
+    statusEl.textContent = 'Score wird gespeichert…';
     try {
       await saveScore(game, saveScoreVal, duration);
       if (destroyed) return;

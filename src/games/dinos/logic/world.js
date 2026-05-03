@@ -69,8 +69,10 @@ export function findEncounters(state) {
   return encounters;
 }
 
-// Stub: Resolver-Formel ist out-of-scope für Phase 1.
-// Vertragsform steht, Implementierung folgt in Phase 2.
+// PHASE 2 STUB: Resolver-Formel ist out-of-scope für Phase 1.
+// Vertragsform steht, Implementierung folgt in Phase 2 — bis dahin liefert
+// dieser Stub einen No-Op-Outcome zurück. Aufrufer in step.js sollten das
+// im Kopf behalten (kein realer Schaden, keine HP-Verluste).
 export function resolveEncounter(encounter, state, rng) {
   return {
     newState: state,

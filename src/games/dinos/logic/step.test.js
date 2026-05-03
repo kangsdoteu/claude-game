@@ -27,6 +27,23 @@ describe('step — Immutabilitäts-Vertrag', () => {
     const result = step(s, 1, null);
     expect(result).toBe(s);
   });
+
+  it('mutiert pendingGeneration nicht in nachfolgenden EVALUATING-Frames', () => {
+    // Reproduziert den Mutation-Leak, der vor dem Path-wise-Klon im Reducer existierte:
+    // Sobald state.pendingGeneration einmal initialisiert war, schrieben die Phasen-
+    // Funktionen direkt in dessen Arrays (nextPg.fitnesses === pg.fitnesses).
+    let s = createState({ mode: 'realtime', seed: 13 });
+    s = { ...s, phase: PHASE.EVALUATING, phaseProgress: 0 };
+    // Erster step initialisiert pendingGeneration.
+    s = step(s, 0, null);
+    expect(s.pendingGeneration).not.toBeNull();
+    // In dieser Pop-Größe ist EVALUATING nach einem einzigen Frame nicht fertig
+    // (240 Individuen, Budget 60 → mind. 4 Frames). Snapshot vor zweitem Frame.
+    expect(s.phase).toBe(PHASE.EVALUATING);
+    const snapshot = JSON.stringify(s);
+    step(s, 0, null);
+    expect(JSON.stringify(s)).toBe(snapshot);
+  });
 });
 
 describe('step — Determinismus', () => {

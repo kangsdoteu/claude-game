@@ -23,7 +23,8 @@ function applyAction(state, action) {
 
   if (action === 'start') {
     if (state.started) return state;
-    return { ...state, started: true, startTime: Date.now() };
+    // tick-basiert, nicht wall-clock — Date.now() ist in logic/ verboten (CLAUDE.md).
+    return { ...state, started: true, startTime: state.tick };
   }
 
   // Ab hier gilt: Aktion zählt für actionsThisGeneration
@@ -147,6 +148,24 @@ function slotIndex(archetype, biome) {
   return ALL_SLOTS.findIndex(s => s.archetype === archetype && s.biome === biome);
 }
 
+// Path-wise Klon des pendingGeneration-Buffers. Verhindert, dass Phasen den
+// Caller-State (state.pendingGeneration) durch in-place push/array-write mutieren.
+// Cost ist trivial: 12 Slots × kleine Arrays.
+function clonePendingGeneration(pg) {
+  const out = { cursor: pg.cursor, fitnesses: {}, parents: {}, children: {} };
+  for (const a of ARCHETYPES) {
+    out.fitnesses[a] = {};
+    out.parents[a]   = {};
+    out.children[a]  = {};
+    for (const b of BIOMES) {
+      out.fitnesses[a][b] = [...pg.fitnesses[a][b]];
+      out.parents[a][b]   = [...pg.parents[a][b]];
+      out.children[a][b]  = [...pg.children[a][b]];
+    }
+  }
+  return out;
+}
+
 // ============================================================
 // Phasen-Implementierungen
 // Jede Funktion bekommt state, gibt newState zurück.
@@ -215,12 +234,7 @@ function phaseEvaluating(state) {
   // Arbeitskopie des Cursors
   let { archetype, biome, i } = pg.cursor;
 
-  const nextPg = {
-    fitnesses: pg.fitnesses,
-    parents:   pg.parents,
-    children:  pg.children,
-    cursor:    pg.cursor,
-  };
+  const nextPg = clonePendingGeneration(pg);
 
   outer: while (processed < budget) {
     const pop = state.populations[archetype][biome];
@@ -258,18 +272,13 @@ function phaseSelecting(state) {
   // Lokale rng für Performance (Hot-Loop)
   const rng = makeRng((state.seed ^ state.rngCounter) >>> 0);
 
-  const nextPg = {
-    fitnesses: pg.fitnesses,
-    parents:   pg.parents,
-    children:  pg.children,
-    cursor:    pg.cursor,
-  };
+  const nextPg = clonePendingGeneration(pg);
 
   let rngCallsThisPhase = 0;
 
   while (processed < budget) {
     const pop      = state.populations[archetype][biome];
-    const fits     = pg.fitnesses[archetype][biome];
+    const fits     = nextPg.fitnesses[archetype][biome];
     const count    = POP_PER_BIOME[archetype];
     const pairs    = nextPg.parents[archetype][biome];
 
@@ -311,17 +320,12 @@ function phaseBreeding(state) {
   const rng = makeRng((state.seed ^ state.rngCounter) >>> 0);
   let rngCallsThisPhase = 0;
 
-  const nextPg = {
-    fitnesses: pg.fitnesses,
-    parents:   pg.parents,
-    children:  pg.children,
-    cursor:    pg.cursor,
-  };
+  const nextPg = clonePendingGeneration(pg);
 
   while (processed < budget) {
     const pop      = state.populations[archetype][biome];
-    const fits     = pg.fitnesses[archetype][biome];
-    const pairs    = pg.parents[archetype][biome];
+    const fits     = nextPg.fitnesses[archetype][biome];
+    const pairs    = nextPg.parents[archetype][biome];
     const children = nextPg.children[archetype][biome];
     const count    = POP_PER_BIOME[archetype];
 
@@ -332,8 +336,15 @@ function phaseBreeding(state) {
         const idxB = pop.indexOf(b);
         return (fits[idxB] ?? 0) - (fits[idxA] ?? 0);
       });
+      const genIdx  = state.generation;
+      const slotIdx = slotIndex(archetype, biome);
       for (let e = 0; e < Math.min(ELITISM_COUNT, pop.length); e++) {
-        children.push({ ...sorted[e], age: sorted[e].age + 1 });
+        // Eigene id vergeben — sonst kollidieren Eltern- und Kind-Generation.
+        children.push({
+          ...sorted[e],
+          age: sorted[e].age + 1,
+          id:  `${archetype[0]}_${genIdx + 1}_${slotIdx}_e${e}`,
+        });
       }
     }
 
@@ -380,12 +391,7 @@ function phaseMutating(state) {
   const rng = makeRng((state.seed ^ state.rngCounter) >>> 0);
   let rngCallsThisPhase = 0;
 
-  const nextPg = {
-    fitnesses: pg.fitnesses,
-    parents:   pg.parents,
-    children:  pg.children,
-    cursor:    pg.cursor,
-  };
+  const nextPg = clonePendingGeneration(pg);
 
   while (processed < budget) {
     const children = nextPg.children[archetype][biome];

@@ -41,6 +41,7 @@ export function mount(container) {
   let lastTime  = 0;
   let cleanupControls = null;
   let gameOver  = false;
+  let destroyed = false;           // gesetzt von destroy() — async-Pfade müssen das nach jedem await prüfen
   let startedAt = null;            // wall-clock für Save-Dauer
 
   // ----- DOM -----
@@ -185,27 +186,29 @@ export function mount(container) {
   }
 
   function loop(ts) {
+    // Bail-out wenn die Page entsorgt oder die Runde vorbei ist — sonst plant sich
+    // der RAF-Callback unten endlos selbst neu, obwohl der Body skipped wäre.
+    if (destroyed || gameOver) return;
+
     const dt = Math.min(0.1, (ts - lastTime) / 1000);  // Clamp auf 100ms — gegen Tab-Switch-Spike
     lastTime = ts;
 
-    if (!gameOver) {
-      // Im Turn-Mode laufen GA-Phasen synchron via step(); im Realtime-Mode pacen wir mit dt.
-      if (mode === 'realtime') {
-        state = step(state, dt, null);
-      } else {
-        // Turn-Mode: advance simulating only via dt=0 (kein automatisches Vorrücken),
-        // GA-Phasen werden durch endTurn-Action ausgelöst.
-        // dt=0 sorgt dafür, dass tick nicht steigt — Spieler kontrolliert Zeit.
-      }
-
-      if (!state.alive) {
-        endGame();
-        return;
-      }
-
-      updateHud();
-      render(canvas, state);
+    // Im Turn-Mode laufen GA-Phasen synchron via step(); im Realtime-Mode pacen wir mit dt.
+    if (mode === 'realtime') {
+      state = step(state, dt, null);
+    } else {
+      // Turn-Mode: advance simulating only via dt=0 (kein automatisches Vorrücken),
+      // GA-Phasen werden durch endTurn-Action ausgelöst.
+      // dt=0 sorgt dafür, dass tick nicht steigt — Spieler kontrolliert Zeit.
     }
+
+    if (!state.alive) {
+      endGame();
+      return;
+    }
+
+    updateHud();
+    render(canvas, state);
 
     rafId = requestAnimationFrame(loop);
   }
@@ -251,10 +254,16 @@ export function mount(container) {
     const rawScore = computeScore(state);
     const duration = Math.max(5, Math.floor(((Date.now()) - (startedAt ?? Date.now())) / 1000));
 
+    // DOM-Refs vor jedem await snapshotten — destroy() könnte währenddessen feuern,
+    // dann sind die Knoten weg und getElementById liefert null. Wir prüfen `destroyed`
+    // nach jedem await und brechen sauber ab, statt auf einem detached Node weiterzuschreiben.
     overOverlay.classList.remove('hidden');
     document.getElementById('dn-final-score').textContent = String(rawScore);
     document.getElementById('dn-final-detail').textContent =
       `${state.metrics.generationsSurvived} Generationen · ${state.metrics.biomesExplored.length}/4 Biome · Peak ${state.metrics.peakPop}`;
+
+    const statusEl     = document.getElementById('dn-save-status');
+    const leaderboardEl = document.getElementById('dn-leaderboard');
 
     // DB-Cap (realtime): score ≤ 200 UND score/duration ≤ 0.05.
     // Der Server lehnt sonst mit 42501 ab — wir cappen defensiv, damit der Save klappt.
@@ -263,8 +272,8 @@ export function mount(container) {
     const absCap      = mode === 'turn' ? 5000 : 200;
     const saveScoreVal = Math.max(0, Math.min(rawScore, absCap, ratioCap));
 
-    const statusEl = document.getElementById('dn-save-status');
     const user = await getUser();
+    if (destroyed) return;
     if (!user) {
       const span = document.createElement('span');
       span.textContent = 'Zum Speichern bitte ';
@@ -283,15 +292,18 @@ export function mount(container) {
     }
     try {
       await saveScore(game, saveScoreVal, duration);
+      if (destroyed) return;
       statusEl.textContent = '✓ Score gespeichert!';
       invalidate(game);
-      await renderLeaderboard(document.getElementById('dn-leaderboard'), game);
+      await renderLeaderboard(leaderboardEl, game);
     } catch (e) {
+      if (destroyed) return;
       statusEl.textContent = '⚠ ' + e.message;
     }
   }
 
   function destroy() {
+    destroyed = true;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = null;
     cleanupControls?.();

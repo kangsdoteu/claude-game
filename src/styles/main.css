@@ -274,7 +274,7 @@ a:hover { text-decoration: underline; }
 .leaderboard { background: var(--surface); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 1rem; }
 .leaderboard h3 { font-size: 1rem; margin-bottom: 0.75rem; }
 
-.lb-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.lb-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
 .lb-tabs [role=tab] {
   padding: 0.3rem 0.9rem;
   background: transparent;
@@ -657,6 +657,19 @@ dialog::backdrop {
   background: #000;
   cursor: crosshair;
   border-radius: var(--radius);
+}
+
+/* Mobile: Dino-Evo hat kein D-pad — die generische .game-area canvas-Regel
+   in der ≤700px-Media-Query zieht aber --dpad-h ab. Hier ID-spezifisch
+   (höhere Specificity) korrigieren, damit das Canvas die volle Höhe nutzt
+   und die game-page nicht mit Phantom-Padding endet. */
+@media (max-width: 700px) {
+  .game-area #dn-canvas {
+    max-height: calc(100dvh - var(--nav-h) - var(--score-strip-h) - var(--safe-bottom) - 16px);
+  }
+  .game-page:has(#dn-canvas) {
+    padding-bottom: var(--safe-bottom);
+  }
 }
 
 /* Landscape: canvas left, D-pad right; leaderboard hidden during play */

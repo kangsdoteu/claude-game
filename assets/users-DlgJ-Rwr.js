@@ -1,1 +1,0 @@
-function o(n){const e=document.createElement("section");e.className="admin-tab admin-tab-users";const t=document.createElement("p");return t.className="admin-placeholder-text",t.textContent="Nutzer-Verwaltung — folgt in Phase 3.",e.appendChild(t),n.appendChild(e),function(){}}export{o as mount};

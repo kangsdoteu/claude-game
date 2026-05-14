@@ -1,5 +1,7 @@
 import { initNav } from './ui/nav.js';
 import { isSupabaseConfigured } from './api/supabase.js';
+import { getRouteAvailability } from './ui/game-availability.js';
+import { renderDisabledPage } from './ui/disabled-page.js';
 
 const app = document.getElementById('app');
 let currentDestroy = null;
@@ -12,7 +14,19 @@ const routes = {
   'admin':  () => import('./pages/admin/index.js'),
 };
 
-async function router() {
+const GAME_ROUTES = new Set(['tetris', 'snake', 'dinos']);
+
+// Serialize router() so two rapid hashchanges can't run in parallel and
+// race on `currentDestroy` / `app.innerHTML`. Each call queues onto the
+// previous; the hash-token bail then ensures only the latest navigation
+// actually mounts.
+let routerQueue = Promise.resolve();
+function router() {
+  routerQueue = routerQueue.then(_router, _router);
+  return routerQueue;
+}
+
+async function _router() {
   const hash = location.hash.replace('#/', '').split('?')[0] || '';
   const loader = routes[hash] ?? routes[''];
 
@@ -23,7 +37,21 @@ async function router() {
   }
   app.innerHTML = '';
 
+  // Race-Schutz: bei Hash-Wechsel während eines awaits brechen wir ab
+  // und überlassen dem nächsten router()-Lauf das Rendering.
+  const routerHash = location.hash;
+
+  if (GAME_ROUTES.has(hash)) {
+    const avail = await getRouteAvailability(hash);
+    if (location.hash !== routerHash) return;
+    if (avail && !avail.enabled) {
+      currentDestroy = renderDisabledPage(app, hash, avail.disabled_message);
+      return;
+    }
+  }
+
   const mod = await loader();
+  if (location.hash !== routerHash) return;
   currentDestroy = mod.mount(app);
 }
 

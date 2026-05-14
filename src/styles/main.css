@@ -1092,7 +1092,6 @@ dialog::backdrop {
   .admin-stats-top-tab { white-space: nowrap; }
 }
 
-<<<<<<< HEAD
 /* ===== Maintenance Banner ===== */
 .maintenance-banner {
   display: flex;
@@ -1235,3 +1234,16 @@ dialog::backdrop {
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+/* ===== Admin – Moderation tab ===== */
+.admin-moderation { display: flex; flex-direction: column; gap: 2rem; }
+.admin-mod-section { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 1rem 1.25rem; }
+.admin-mod-section-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.admin-mod-section h2 { margin: 0; font-size: 1rem; color: var(--text); }
+.admin-mod-game-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.admin-mod-game-tab { background: transparent; border: none; padding: 0.4rem 0.85rem; border-radius: var(--radius); color: var(--text-muted); font: inherit; cursor: pointer; }
+.admin-mod-game-tab.active { background: var(--surface2); color: var(--accent); }
+.admin-mod-action-btn { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+.admin-mod-action-btn--danger { color: var(--danger); }
+.admin-mod-action-btn--danger:hover:not(:disabled) { border-color: var(--danger); }
+.admin-mod-empty { color: var(--text-muted); padding: 1rem; text-align: center; }

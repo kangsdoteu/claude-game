@@ -803,3 +803,81 @@ dialog::backdrop {
 .admin-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 .admin-tab-content { min-height: 200px; }
 .admin-placeholder-text { color: var(--text-muted); }
+
+/* ===== Admin – Users tab ===== */
+.admin-users-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-users-search {
+  padding: 0.5rem 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.admin-users-search:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+.admin-users-page-info { color: var(--text-muted); font-size: 0.875rem; white-space: nowrap; }
+
+.admin-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.admin-table { width: 100%; border-collapse: collapse; }
+
+.admin-table th,
+.admin-table td {
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.admin-table th {
+  background: var(--surface);
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr:hover { background: var(--surface2); }
+
+.admin-table .col-num { text-align: right; }
+
+.admin-users-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.admin-users-pagination button {
+  padding: 0.4rem 0.85rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.admin-users-pagination button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.admin-users-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.admin-users-page-indicator { color: var(--text-muted); font-size: 0.875rem; }
+
+.admin-loading { color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0.75rem; }
+.admin-error   { color: var(--danger);     font-size: 0.9rem; padding: 0.5rem 0.75rem; }
+.admin-empty   { color: var(--text-muted); font-size: 0.9rem; padding: 0.5rem 0.75rem; }
+
+@media (max-width: 640px) {
+  .admin-users-toolbar { flex-direction: column; align-items: stretch; }
+  .admin-users-search  { flex: 1 1 auto; }
+}

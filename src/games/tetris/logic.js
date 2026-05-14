@@ -45,8 +45,10 @@ export function createState() {
   let bag = createBag();
   let nextBag = createBag();
 
-  const current = spawnPiece(bag.shift());
-  const next = spawnPiece(bag.length ? bag[0] : nextBag[0]);
+  const [firstKey, ...restBag] = bag;
+  bag = restBag;
+  const current = spawnPiece(firstKey);
+  const next = previewNext(bag, nextBag);
 
   return {
     board: createBoard(),
@@ -65,12 +67,18 @@ export function createState() {
   };
 }
 
+function previewNext(bag, nextBag) {
+  return spawnPiece(bag.length ? bag[0] : nextBag[0]);
+}
+
 function nextPiece(state) {
-  let { bag, nextBag } = state;
+  let bag = state.bag;
+  let nextBag = state.nextBag;
   if (!bag.length) { bag = nextBag; nextBag = createBag(); }
-  const key = bag.shift();
+  const [key, ...rest] = bag;
+  bag = rest;
   if (!bag.length) { bag = nextBag; nextBag = createBag(); }
-  return { piece: spawnPiece(key), bag, nextBag, nextPieceKey: bag[0] ?? nextBag[0] };
+  return { piece: spawnPiece(key), bag, nextBag };
 }
 
 // Clockwise rotation via matrix transpose + row reverse
@@ -140,12 +148,24 @@ export function dispatch(state, action) {
       const newHeld = { id: current.id, color: current.color, shape: TETROMINOES[
         Object.keys(TETROMINOES).find(k => TETROMINOES[k].id === current.id)
       ].shape.map(r => [...r]) };
-      const nextCurrent = heldKey
-        ? spawnPiece(Object.keys(TETROMINOES).find(k => TETROMINOES[k].id === heldKey.id))
-        : (() => { const n = nextPiece(state); return n.piece; })();
+      if (heldKey) {
+        const nextCurrent = spawnPiece(Object.keys(TETROMINOES).find(k => TETROMINOES[k].id === heldKey.id));
+        if (collides(board, nextCurrent.shape, nextCurrent.x, nextCurrent.y))
+          return { ...state, alive: false };
+        return { ...state, current: nextCurrent, held: newHeld, holdUsed: true };
+      }
+      const { piece: nextCurrent, bag: newBag, nextBag: newNextBag } = nextPiece(state);
       if (collides(board, nextCurrent.shape, nextCurrent.x, nextCurrent.y))
         return { ...state, alive: false };
-      return { ...state, current: nextCurrent, held: newHeld, holdUsed: true };
+      return {
+        ...state,
+        current: nextCurrent,
+        next: previewNext(newBag, newNextBag),
+        bag: newBag,
+        nextBag: newNextBag,
+        held: newHeld,
+        holdUsed: true,
+      };
     }
   }
   return state;
@@ -173,7 +193,7 @@ function lockPiece(state) {
   const newScore = state.score + LINE_SCORES[linesCleared] * (state.level + 1);
 
   // Spawn next piece
-  const { piece: newCurrent, bag, nextBag } = nextPiece({ ...state, bag: [...state.bag], nextBag: [...state.nextBag] });
+  const { piece: newCurrent, bag, nextBag } = nextPiece(state);
 
   if (collides(finalBoard, newCurrent.shape, newCurrent.x, newCurrent.y))
     return { ...state, board: finalBoard, score: newScore, lines: newLines, level: newLevel, alive: false };
@@ -182,6 +202,7 @@ function lockPiece(state) {
     ...state,
     board: finalBoard,
     current: newCurrent,
+    next: previewNext(bag, nextBag),
     bag,
     nextBag,
     holdUsed: false,

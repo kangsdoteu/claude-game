@@ -185,7 +185,12 @@ LEFT JOIN (
     GROUP BY user_id
 ) sc ON sc.user_id = p.id;
 
-CREATE OR REPLACE FUNCTION public.admin_list_users(
+-- DROP zwingend vor CREATE — CREATE OR REPLACE darf in Postgres den Return-Type
+-- einer existierenden Funktion nicht ändern (42P13). admin_list_users existiert
+-- aus 006 mit 8 Spalten; wir erweitern auf 10.
+DROP FUNCTION IF EXISTS public.admin_list_users(INT, INT);
+
+CREATE FUNCTION public.admin_list_users(
     p_limit  INT DEFAULT 100,
     p_offset INT DEFAULT 0
 )

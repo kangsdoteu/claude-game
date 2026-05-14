@@ -1,0 +1,1 @@
+function o(n){const t=document.createElement("section");t.className="admin-tab admin-tab-audit";const e=document.createElement("p");return e.className="admin-placeholder-text",e.textContent="Audit-Log — folgt in Phase 7.",t.appendChild(e),n.appendChild(t),function(){}}export{o as mount};

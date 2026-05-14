@@ -1,0 +1,1 @@
+function a(n){const e=document.createElement("section");e.className="admin-tab admin-tab-moderation";const t=document.createElement("p");return t.className="admin-placeholder-text",t.textContent="Moderation — folgt in Phase 8.",e.appendChild(t),n.appendChild(e),function(){}}export{a as mount};

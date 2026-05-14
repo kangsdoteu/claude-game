@@ -1,0 +1,1 @@
+function o(n){const t=document.createElement("section");t.className="admin-tab admin-tab-stats";const e=document.createElement("p");return e.className="admin-placeholder-text",e.textContent="Statistiken — folgen in Phase 5.",t.appendChild(e),n.appendChild(t),function(){}}export{o as mount};

@@ -1,4 +1,4 @@
-import{a as C,b as E,r as L,c as x}from"./index-CbVqiZDo.js";let e=null,m=null;function M(){if(e)return{open:k};e=document.getElementById("auth-modal"),e.innerHTML=`
+import{a as C,b as E,r as L,c as x}from"./index-Dvpb4Uq8.js";let e=null,m=null;function M(){if(e)return{open:k};e=document.getElementById("auth-modal"),e.innerHTML=`
     <div class="modal-box">
       <button class="modal-close" aria-label="Schließen">✕</button>
       <h2 id="auth-modal-title">Anmelden</h2>

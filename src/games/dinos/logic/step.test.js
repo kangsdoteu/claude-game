@@ -81,6 +81,19 @@ describe('step — Phasen-Übergänge (Turn-Mode)', () => {
     expect(result.phase).toBe(PHASE.SIMULATING);
   });
 
+  it('endTurn ohne echte Aktionen zählt nicht (Regression #39)', () => {
+    // Bug #39: dreimal Q drücken durfte den Button freischalten, indem der
+    // Fallback-Zweig in endTurn den Counter selbst hochzählte. Counter muss 0
+    // bleiben und der Button (Bedingung: actions ≥ MIN) gesperrt sein.
+    let s = createState({ mode: 'turn', seed: 1 });
+    s = step(s, 0, 'start');
+    for (let i = 0; i < TURN_MIN_ACTIONS_PER_GEN + 2; i++) {
+      s = step(s, 0, 'endTurn');
+    }
+    expect(s.player.actionsThisGeneration).toBe(0);
+    expect(s.phase).toBe(PHASE.SIMULATING);
+  });
+
   it('Turn-Mode: endTurn nach TURN_MIN_ACTIONS_PER_GEN durchläuft alle GA-Phasen synchron', () => {
     let s = createState({ mode: 'turn', seed: 2 });
     s = step(s, 0, 'start');

@@ -2,16 +2,19 @@ import { initNav } from './ui/nav.js';
 import { isSupabaseConfigured } from './api/supabase.js';
 import { getRouteAvailability } from './ui/game-availability.js';
 import { renderDisabledPage } from './ui/disabled-page.js';
+import { initMaintenanceBanner } from './ui/maintenance-banner.js';
+import { initFooter } from './ui/footer.js';
 
 const app = document.getElementById('app');
 let currentDestroy = null;
 
 const routes = {
-  '':       () => import('./pages/home.js'),
-  'tetris': () => import('./pages/tetris.js'),
-  'snake':  () => import('./pages/snake.js'),
-  'dinos':  () => import('./pages/dinos.js'),
-  'admin':  () => import('./pages/admin/index.js'),
+  '':            () => import('./pages/home.js'),
+  'tetris':      () => import('./pages/tetris.js'),
+  'snake':       () => import('./pages/snake.js'),
+  'dinos':       () => import('./pages/dinos.js'),
+  'admin':       () => import('./pages/admin/index.js'),
+  'datenschutz': () => import('./pages/datenschutz.js'),
 };
 
 const GAME_ROUTES = new Set(['tetris', 'snake', 'dinos']);
@@ -84,6 +87,8 @@ async function init() {
   }
 
   initNav();
+  initMaintenanceBanner(document.body);
+  initFooter(document.body);
   window.addEventListener('hashchange', router);
   await router();
 }

@@ -1,6 +1,7 @@
 import { getGameSettings, invalidateGameSettings, GAME_LABELS } from '../../ui/game-availability.js';
 import { refreshNavLinkAvailability } from '../../ui/nav.js';
 import { supabase } from '../../api/supabase.js';
+import { logAuditAction } from '../../api/admin.js';
 
 export function mount(container) {
   let destroyed = false;
@@ -121,6 +122,17 @@ async function handleSave(game, enabled, message, saveBtn, statusEl) {
       : `Fehler: ${error.message}`;
     statusEl.className = 'admin-games-status admin-games-status-error';
     return;
+  }
+
+  try {
+    await logAuditAction('toggle_game', {
+      targetType: 'game',
+      targetId: game,
+      payload: { enabled, disabled_message: (message ?? '').trim() || null },
+    });
+  } catch (err) {
+    // Audit-Failure soll den User-flow nicht abbrechen — nur loggen
+    console.warn('Audit-Eintrag fehlgeschlagen', err);
   }
 
   invalidateGameSettings();

@@ -106,6 +106,21 @@ Hash-basiert (`#/tetris`, `#/snake`, leer = Home). Neue Routen in `src/main.js` 
 - **Modulgrenzen respektieren.** `pages/` darf `games/`, `api/`, `ui/` importieren. `games/` darf nichts aus `pages/` oder `ui/` importieren. `api/` darf nichts aus `games/`/`pages/`/`ui/` importieren. Innerhalb von `src/games/<spiel>/`, falls `logic` ein Verzeichnis ist: nur über `logic/index.js` importieren — nie direkt aus Sub-Modulen.
 - **`Math.random()` ist in `src/games/dinos/logic/**` verboten.** RNG kommt ausschließlich aus `makeRng` / `nextRandom` in `state.js`.
 
+## Arbeitsweise mit Agents
+
+Für nicht-triviale Arbeit immer die spezialisierten Sub-Agents nutzen, statt alles selbst zu machen. Trivial = Single-File-Edit, ein Bash-Befehl, kurze Lookup-Frage. Alles andere geht über einen Agent. Parallel laufende Agents in einem einzigen Tool-Aufruf-Block starten, wenn die Aufgaben unabhängig sind.
+
+| Agent           | Wann                                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------------------- |
+| `Plan`          | Vor Mehr-Datei-Features / Refactors einen Implementierungsplan erstellen lassen.                           |
+| `architect`     | Architektur-/Tech-Choice-Entscheidungen, Security-Reviews, Cross-Modul-Designfragen.                       |
+| `developer`     | Konkrete Code-Änderungen (Bugfixes, Features, Migrationen). Bekommt Pfad + Zeilen + erwartetes Verhalten.  |
+| `tester`        | UI-Verifikation im Browser, E2E-Bugs, Regressionsprüfung nach Mobile-/UX-Changes. Filet auch GH-Issues.    |
+| `Explore`       | Code-Suche über mehrere Runden („wo wird X gesetzt?", „welche Dateien referenzieren Y?").                  |
+| `game-designer` | Neue Spielkonzepte / Mechanik-Twists / Feasibility-Checks im Browser-Kontext.                              |
+
+Briefing-Regeln (siehe globale System-Hinweise): konkrete Pfade/Zeilen mitgeben, gewünschtes Ergebnis benennen, Antwortlänge ggf. begrenzen. Niemals das Verständnis delegieren („based on your findings, fix it") — der Hauptagent muss die Aufgabe selbst durchdrungen haben. **Nach `developer`-Runs immer den Diff selbst prüfen**, bevor "fertig" gemeldet wird — der Agent berichtet seine Absicht, nicht zwingend das tatsächliche Ergebnis.
+
 ## Häufige Aufgaben
 
 ### Neues Spiel hinzufügen

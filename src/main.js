@@ -16,7 +16,17 @@ const routes = {
 
 const GAME_ROUTES = new Set(['tetris', 'snake', 'dinos']);
 
-async function router() {
+// Serialize router() so two rapid hashchanges can't run in parallel and
+// race on `currentDestroy` / `app.innerHTML`. Each call queues onto the
+// previous; the hash-token bail then ensures only the latest navigation
+// actually mounts.
+let routerQueue = Promise.resolve();
+function router() {
+  routerQueue = routerQueue.then(_router, _router);
+  return routerQueue;
+}
+
+async function _router() {
   const hash = location.hash.replace('#/', '').split('?')[0] || '';
   const loader = routes[hash] ?? routes[''];
 

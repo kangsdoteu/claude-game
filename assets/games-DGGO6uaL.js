@@ -1,1 +1,0 @@
-function o(n){const e=document.createElement("section");e.className="admin-tab admin-tab-games";const t=document.createElement("p");return t.className="admin-placeholder-text",t.textContent="Spiele-Verwaltung — folgt in Phase 4.",e.appendChild(t),n.appendChild(e),function(){}}export{o as mount};

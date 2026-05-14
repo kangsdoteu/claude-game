@@ -67,3 +67,23 @@ export async function topPlayers(game, limit = 10) {
   if (error) handleError(error);
   return data ?? [];
 }
+
+export async function logAuditAction(action, { targetType = null, targetId = null, payload = null } = {}) {
+  const { data, error } = await supabase.rpc('admin_log_action', {
+    p_action: action,
+    p_target_type: targetType,
+    p_target_id: targetId,
+    p_payload: payload,
+  });
+  if (error) handleError(error);
+  return data;
+}
+
+export async function listAuditLog({ limit = 100, offset = 0 } = {}) {
+  const { data, error } = await supabase.rpc('admin_list_audit_log', {
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) handleError(error);
+  return data ?? [];
+}

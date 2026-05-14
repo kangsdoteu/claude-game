@@ -10,6 +10,9 @@
   --danger:        #e53170;
   --success:       #2cb67d;
   --radius:        8px;
+  --border-subtle: rgba(255,255,255,0.08);
+  --border:        rgba(255,255,255,0.12);
+  --border-strong: rgba(255,255,255,0.20);
   --nav-h:         56px;
   --score-strip-h: 48px;
   --dpad-h:        208px;
@@ -44,7 +47,7 @@ a:hover { text-decoration: underline; }
   height: var(--nav-h);
   padding: 0 1.5rem;
   background: var(--surface);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .nav-brand a { font-size: 1.2rem; font-weight: 700; color: var(--text); }
@@ -74,7 +77,7 @@ a:hover { text-decoration: underline; }
   padding: 0.4rem 1rem;
   background: transparent;
   color: var(--text-muted);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 0.9rem;
   cursor: pointer;
@@ -122,7 +125,7 @@ a:hover { text-decoration: underline; }
   gap: 0.75rem;
   padding: 2rem;
   background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   text-decoration: none;
   color: var(--text);
@@ -150,7 +153,7 @@ a:hover { text-decoration: underline; }
 
 .game-area canvas {
   display: block;
-  border: 2px solid rgba(255,255,255,0.1);
+  border: 2px solid var(--border-subtle);
   border-radius: 4px;
 }
 
@@ -234,7 +237,7 @@ a:hover { text-decoration: underline; }
 
 .stat-box {
   background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   padding: 0.75rem;
 }
@@ -262,7 +265,7 @@ a:hover { text-decoration: underline; }
 }
 .controls-list kbd {
   background: var(--surface2);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   padding: 0.1rem 0.4rem;
   border-radius: 3px;
   font-size: 0.75rem;
@@ -271,14 +274,14 @@ a:hover { text-decoration: underline; }
 }
 
 /* ===== Leaderboard ===== */
-.leaderboard { background: var(--surface); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius); padding: 1rem; }
+.leaderboard { background: var(--surface); border: 1px solid var(--border-subtle); border-radius: var(--radius); padding: 1rem; }
 .leaderboard h3 { font-size: 1rem; margin-bottom: 0.75rem; }
 
 .lb-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
 .lb-tabs [role=tab] {
   padding: 0.3rem 0.9rem;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-muted);
   font-size: 0.85rem;
@@ -287,7 +290,7 @@ a:hover { text-decoration: underline; }
 .lb-tabs [role=tab].active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 .lb-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.lb-table th { text-align: left; color: var(--text-muted); padding: 0.25rem 0.5rem; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.lb-table th { text-align: left; color: var(--text-muted); padding: 0.25rem 0.5rem; font-weight: 500; border-bottom: 1px solid var(--border-subtle); }
 .lb-table td { padding: 0.35rem 0.5rem; }
 .lb-table .top-1 td { color: #ffd700; }
 .lb-table .top-2 td { color: #c0c0c0; }
@@ -330,7 +333,7 @@ a:hover { text-decoration: underline; }
 .lb-retry {
   padding: 0.25rem 0.75rem;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-muted);
   font-size: 0.85rem;
@@ -364,7 +367,7 @@ dialog::backdrop {
 .modal-box {
   position: relative;
   background: var(--surface);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 2rem;
   width: min(400px, 90vw);
@@ -401,7 +404,7 @@ dialog::backdrop {
   flex: 1;
   padding: 0.5rem;
   background: transparent;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-muted);
   font-size: 0.9rem;
@@ -414,7 +417,7 @@ dialog::backdrop {
 #auth-form input {
   padding: 0.6rem 0.8rem;
   background: var(--surface2);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
   font-size: 1rem;
@@ -439,7 +442,7 @@ dialog::backdrop {
   width: var(--dpad-btn-size);
   height: var(--dpad-btn-size);
   background: var(--surface2);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text);
   font-size: 1.2rem;
@@ -465,7 +468,7 @@ dialog::backdrop {
 .config-error p  { color: var(--text-muted); line-height: 1.6; }
 .config-error pre {
   background: var(--surface2);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   padding: 1rem;
   font-size: 0.85rem;
@@ -484,7 +487,7 @@ dialog::backdrop {
     height: var(--score-strip-h);
     padding: 0 0.75rem;
     background: var(--surface);
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--border-subtle);
     position: sticky;
     top: var(--nav-h);
     z-index: 80;
@@ -540,7 +543,7 @@ dialog::backdrop {
     padding: 0.5rem 0.5rem calc(0.5rem + var(--safe-bottom));
     background: var(--bg);
     z-index: 90;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid var(--border-subtle);
   }
 
   .game-cards { grid-template-columns: 1fr; }
@@ -577,7 +580,7 @@ dialog::backdrop {
 .dn-hint kbd {
   display: inline-block;
   padding: 0.05rem 0.4rem;
-  border: 1px solid rgba(255,255,255,0.2);
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   font-size: 0.75rem;
   background: rgba(255,255,255,0.05);
@@ -612,7 +615,7 @@ dialog::backdrop {
   margin-left: 0.4rem;
   display: inline-block;
   padding: 0.05rem 0.4rem;
-  border: 1px solid rgba(255,255,255,0.25);
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   font-size: 0.7rem;
   background: rgba(0,0,0,0.2);
@@ -635,7 +638,7 @@ dialog::backdrop {
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface2);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
@@ -672,7 +675,7 @@ dialog::backdrop {
   align-items: flex-start;
   padding: 0.4rem 0.6rem;
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   cursor: pointer;
   color: var(--text);
@@ -770,7 +773,7 @@ dialog::backdrop {
     flex-direction: column;
     justify-content: center;
     background: var(--bg);
-    border-left: 1px solid rgba(255,255,255,0.08);
+    border-left: 1px solid var(--border-subtle);
     border-top: none;
     z-index: 90;
   }

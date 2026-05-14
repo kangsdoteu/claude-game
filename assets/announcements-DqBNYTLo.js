@@ -1,1 +1,0 @@
-function o(t){const e=document.createElement("section");e.className="admin-tab admin-tab-announcements";const n=document.createElement("p");return n.className="admin-placeholder-text",n.textContent="Banner-Verwaltung — folgt in Phase 9.",e.appendChild(n),t.appendChild(e),function(){}}export{o as mount};

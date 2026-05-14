@@ -87,3 +87,46 @@ export async function listAuditLog({ limit = 100, offset = 0 } = {}) {
   if (error) handleError(error);
   return data ?? [];
 }
+
+export async function deleteScore(scoreId, reason = null) {
+  const { error } = await supabase.rpc('admin_delete_score', {
+    p_score_id: scoreId,
+    p_reason: reason,
+  });
+  if (error) handleError(error);
+}
+
+export async function banUser(userId, reason = null) {
+  const { error } = await supabase.rpc('admin_ban_user', {
+    p_user_id: userId,
+    p_reason: reason,
+  });
+  if (error) handleError(error);
+}
+
+export async function unbanUser(userId) {
+  const { error } = await supabase.rpc('admin_unban_user', {
+    p_user_id: userId,
+  });
+  if (error) handleError(error);
+}
+
+export async function rateLimitRecent(hours = 1) {
+  const { data, error } = await supabase.rpc('admin_rate_limit_recent', {
+    p_hours: hours,
+  });
+  if (error) handleError(error);
+  return data ?? [];
+}
+
+export async function listRecentScores({ limit = 50, offset = 0, game = null } = {}) {
+  let query = supabase
+    .from('scores')
+    .select('id, game, score, duration_seconds, created_at, user_id, profiles(display_name)')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (game) query = query.eq('game', game);
+  const { data, error } = await query;
+  if (error) handleError(error);
+  return data ?? [];
+}

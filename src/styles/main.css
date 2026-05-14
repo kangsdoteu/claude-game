@@ -881,3 +881,128 @@ dialog::backdrop {
   .admin-users-toolbar { flex-direction: column; align-items: stretch; }
   .admin-users-search  { flex: 1 1 auto; }
 }
+
+/* ===== Game-Card: deaktiviert ===== */
+.game-card--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(60%);
+}
+.game-card--disabled:hover {
+  border-color: var(--border-subtle);
+  transform: none;
+}
+
+.game-card-disabled-msg {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* ===== Nav-Link: deaktiviert ===== */
+.nav-links a.nav-link--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.nav-links a.nav-link--disabled:hover {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* ===== Disabled-Page ===== */
+.disabled-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 3rem 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+.disabled-page h1 { font-size: 1.8rem; }
+.disabled-page p  { color: var(--text-muted); }
+.disabled-page-btn {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s;
+  text-decoration: none;
+}
+.disabled-page-btn:hover { opacity: 0.85; text-decoration: none; }
+
+/* ===== Admin – Games tab ===== */
+.admin-games {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-games-row {
+  display: grid;
+  grid-template-columns: 200px auto 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.admin-games-label {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-games-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.admin-games-message {
+  padding: 0.5rem 0.75rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  min-width: 0;
+}
+.admin-games-message:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+.admin-games-status {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  min-width: 7rem;
+  text-align: right;
+}
+.admin-games-status-loading { color: var(--text-muted); }
+.admin-games-status-success { color: var(--success); }
+.admin-games-status-error   { color: var(--danger); }
+
+@media (max-width: 640px) {
+  .admin-games-row {
+    grid-template-columns: 1fr;
+  }
+  .admin-games-status {
+    text-align: left;
+  }
+}
